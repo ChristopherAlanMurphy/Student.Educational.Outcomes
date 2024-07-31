@@ -1,0 +1,233 @@
+---
+title: "IST 707 Final Project - Student Educational Outcomes"
+author: "Christoper Murphy, Padmaja Kurumaddali, La Monte Yarroll"
+date: "Septemner 07, 2024"
+output: word_document
+
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+```{r include=FALSE}
+#first, install and load required libraries
+#using function provided by Professor Gary Krudys.
+
+#specify the packages needed
+packages=c("tidyverse")
+
+#use this function to check if each package is on the local machine
+#if a package is installed, it will be loaded
+#if any are not, the missing package(s) will be installed and loaded
+package.check <- lapply(packages, FUN = function(x) {
+  if (!require(x, character.only = TRUE)) {
+    install.packages(x, dependencies = TRUE)
+    library(x, character.only = TRUE)
+  }
+})
+
+#verify they are loaded
+search()
+```
+
+
+```{r eval=FALSE, include=FALSE}
+#References used to inform code choices:
+
+```
+
+
+# Introduction
+ 
+
+# Analysis and Models
+
+
+## About the data
+
+
+### Dataset Summary
+The following dataset was located on Kaggle at the following page:
+
+https://www.kaggle.com/code/mdismielhossenabir/student-s-dropout-and-academic-success
+
+
+This dataset contains information on students' marital status, application details, previous qualifications, family background, admission grades, financial status, and academic performance. The target variable indicates whether a student dropped out or achieved academic success. The data spans multiple semesters and includes economic indicators such as unemployment rate, inflation rate, and GDP. Researchers can leverage this dataset to develop models for predicting dropout and academic success, contributing to the understanding of factors influencing educational outcomes.
+
+
+
+
+### Data Retrieval
+Data structure structure when read in from the .CSV file:
+
+```{r echo=FALSE}
+filePath = "studentdata.csv"
+studentSuccessData = read.csv2(filePath, stringsAsFactors = FALSE, dec=".")
+str(studentSuccessData)
+```
+
+
+#### Initial Data Sample
+A sample set of records:
+```{r echo=FALSE}
+head(studentSuccessData, 5)
+```
+
+#### Check for Missing Values
+
+```{r echo=FALSE}
+colSums(is.na(studentSuccessData))
+```
+
+
+
+\pagebreak
+### Data Attribute Summary
+
+The Kaggle data card can also be found on the following page
+https://www.kaggle.com/code/mdismielhossenabir/student-s-dropout-and-academic-success/input
+
+### Attribute Summary:
+* Marital Status: The marital status of the student
+* Application mode: The mode through which the student applied for admission
+* Application order: The order in which the student applied for admission.
+* Course: The academic course or program the student is enrolled in.
+* Daytime/evening attendance: The attendance mode of the student (e.g., Daytime, Evening).
+* Previous qualification: The highest academic qualification the student attained before the current enrollment.
+* Previous qualification (grade): The grade or score achieved in the previous qualification.
+* Nacionality: The nationality of the student.
+* Mother's qualification: The highest academic qualification of the student's mother.
+* Father's qualification: The highest academic qualification of the student's father.
+* Mother's occupation: The occupation of the student's mother.
+* Father's occupation: The occupation of the student's father.
+* Admission grade: The grade or score obtained during the admission process.
+* Displaced: Indicates whether the student has been displaced from their previous location.
+* Educational special needs: Flags if the student has any educational special needs.
+* Debtor: Indicates if the student is a debtor.
+* Tuition fees up to date: Indicates whether the student's tuition fees are up to date.
+* Gender: The gender of the student.
+* Scholarship holder: Flags if the student is a holder of a scholarship.
+* Age at enrollment: The age of the student at the time of enrollment.
+* International: Indicates if the student is an international student.
+* Curricular units 1st sem (credited): The number of curricular units credited in the first semester.
+* Curricular units 1st sem (enrolled): The number of curricular units enrolled in the first semester.
+* Curricular units 1st sem (evaluations): The number of evaluations conducted in the first semester.
+* Curricular units 1st sem (approved): The number of curricular units approved in the first semester.
+* Curricular units 1st sem (grade): The overall grade for curricular units in the first semester.
+* Curricular units 1st sem (without evaluations): Curricular units in the first semester without evaluations.
+* Curricular units 2nd sem (credited): The number of curricular units credited in the second semester.
+* Curricular units 2nd sem (enrolled): The number of curricular units enrolled in the second semester.
+* Curricular units 2nd sem (evaluations): The number of evaluations conducted in the second semester.
+* Curricular units 2nd sem (approved): The number of curricular units approved in the second semester.
+* Curricular units 2nd sem (grade): The overall grade for curricular units in the second semester.
+* Curricular units 2nd sem (without evaluations): Curricular units in the second semester without evaluations.
+* Unemployment rate: The unemployment rate at the time of data collection.
+* Inflation rate: The inflation rate at the time of data collection.
+* GDP: The Gross Domestic Product at the time of data collection.
+* Target: The target variable indicating student outcome (e.g., Dropout, Academic Success).
+
+
+\pagebreak
+### Data Attribute Analysis
+The following section explores the nature of the attributes in the dataset.
+
+
+\pagebreak
+#### The "ABC" Attribute
+```{r echo=FALSE}
+
+```
+
+
+#### The "XYZ" Attribute
+```{r echo=FALSE}
+
+```
+
+
+\pagebreak
+### Exploratory Data Analysis
+
+
+\pagebreak
+### Data Transformation
+
+#### Step 1
+```{r}
+
+```
+
+#### Step 2
+```{r}
+
+```
+
+#### Step 3
+```{r}
+
+```
+
+
+\pagebreak
+## Models
+
+### Model 1
+
+#### Step 1
+```{r}
+
+```
+
+#### Step 2
+```{r}
+
+```
+
+#### Step 3
+```{r}
+
+```
+
+
+\newpage
+# Results
+
+## Attribute Analysis
+
+
+#### the "ABC" attribute
+```{r}
+
+```
+
+
+#### the "XYZ" attribute
+```{r}
+
+```
+
+
+
+\newpage
+## Model Results: Model 1
+
+
+
+## Model Results: Model 2
+
+
+\pagebreak
+# Conclusions
+
+
+
+\pagebreak
+# Limitations of the Analysis and/or Available Data
+
+
+
+
+\pagebreak
+# Bibliography
