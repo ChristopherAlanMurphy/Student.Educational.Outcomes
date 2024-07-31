@@ -5,7 +5,7 @@ Machine Learning techniques to identify and evaluate various contributing factor
 # Project Overview:
  
 # Team Members: 
-Christopher Murphy, Padmaja, La Monte Henry Piggy Yarroll
+Christopher Murphy, Padmaja Kurumaddali, La Monte Henry Piggy Yarroll
 
 # Reason for Selecting this Topic:
 
