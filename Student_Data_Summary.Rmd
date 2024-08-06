@@ -53,10 +53,11 @@ The following dataset was located on Kaggle at the following page:
 
 https://www.kaggle.com/code/mdismielhossenabir/student-s-dropout-and-academic-success
 
+The original source at UCI is here:
+
+https://archive.ics.uci.edu/dataset/697/predict+students+dropout+and+academic+success
 
 This dataset contains information on students' marital status, application details, previous qualifications, family background, admission grades, financial status, and academic performance. The target variable indicates whether a student dropped out or achieved academic success. The data spans multiple semesters and includes economic indicators such as unemployment rate, inflation rate, and GDP. Researchers can leverage this dataset to develop models for predicting dropout and academic success, contributing to the understanding of factors influencing educational outcomes.
-
-
 
 
 ### Data Retrieval
@@ -135,11 +136,75 @@ The following section explores the nature of the attributes in the dataset.
 
 
 \pagebreak
-#### The "ABC" Attribute
-```{r echo=FALSE}
+#### Unordered factors
 
+The following attributes are unordered factors:
+```{r, echo=FALSE}
+unordered_factors <- c(
+  "Marital.status",                               
+  "Application.mode",                              
+  "Course",                                        
+  "Daytime.evening.attendance.",                   
+  "Previous.qualification",                        
+  "Nacionality",                                   
+  "Mother.s.qualification",                        
+  "Father.s.qualification",                        
+  "Mother.s.occupation",                           
+  "Father.s.occupation",                           
+  "Displaced",                                     
+  "Educational.special.needs",                     
+  "Debtor",                                        
+  "Tuition.fees.up.to.date",                       
+  "Gender",                                        
+  "Scholarship.holder",                            
+  "International",                                 
+  "Target")
+
+for(f in unordered_factors) {
+  studentSuccessData[[f]] <- factor(studentSuccessData[[f]])
+}
+unordered_factors
 ```
 
+#### Ordered factors
+
+The following attributes are ordered factors:
+```{r echo=FALSE}
+ordered_factors <- c(
+  "Application.order",                             
+  "Previous.qualification..grade.",                
+  "Admission.grade",                               
+  "Age.at.enrollment",                             
+  "Curricular.units.1st.sem..credited.",           
+  "Curricular.units.1st.sem..enrolled.",           
+  "Curricular.units.1st.sem..evaluations.",        
+  "Curricular.units.1st.sem..approved.",           
+  "Curricular.units.1st.sem..grade.",              
+  "Curricular.units.1st.sem..without.evaluations.",
+  "Curricular.units.2nd.sem..credited.",           
+  "Curricular.units.2nd.sem..enrolled.",           
+  "Curricular.units.2nd.sem..evaluations.",        
+  "Curricular.units.2nd.sem..approved.",           
+  "Curricular.units.2nd.sem..grade.",              
+  "Curricular.units.2nd.sem..without.evaluations.")
+
+for(f in ordered_factors) {
+  studentSuccessData[[f]] <- factor(studentSuccessData[[f]], ordered=TRUE)
+}
+ordered_factors
+```
+
+#### Data with factors
+
+```{r}
+summary(studentSuccessData)
+```
+
+
+#### Continuous Attributes
+
+These attributes are continuous variables:
+["Unemployment.rate", "Inflation.rate", "GDP"]                            
 
 #### The "XYZ" Attribute
 ```{r echo=FALSE}
@@ -231,3 +296,6 @@ The following section explores the nature of the attributes in the dataset.
 
 \pagebreak
 # Bibliography
+
+Realinho,Valentim, Vieira Martins,Mónica, Machado,Jorge, and Baptista,Luís. (2021). Predict Students' Dropout and Academic Success. UCI Machine Learning Repository. https://doi.org/10.24432/C5MC89.
+
