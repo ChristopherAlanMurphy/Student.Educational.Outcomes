@@ -136,9 +136,50 @@ The following section explores the nature of the attributes in the dataset.
 
 
 \pagebreak
-#### Factors
+
+### Data Transformations
 
 ```{r echo=FALSE}
+
+# Display data types of each column
+
+str(studentSuccessData)
+ 
+# Check for missing values
+
+sapply(studentSuccessData, function(x) sum(is.na(x)))
+ 
+# Perform necessary transformations
+
+# Fill missing values with the mean for numeric columns and mode for categorical columns
+
+studentSuccessData <- studentSuccessData %>%
+
+  mutate(across(where(is.numeric), ~ ifelse(is.na(.), mean(., na.rm = TRUE), .))) %>%
+
+  mutate(across(where(is.character), ~ ifelse(is.na(.), Mode(.), .)))
+ 
+# Function to calculate mode
+
+Mode <- function(x) {
+
+  ux <- unique(x)
+
+  ux[which.max(tabulate(match(x, ux)))]
+
+}
+ 
+# Convert categorical columns to factor type
+
+studentSuccessData <- studentSuccessData %>%
+  mutate(across(where(is.character), as.factor))
+
+# Check transformed data 
+
+summary(studentSuccessData)
+
+str(studentSuccessData)
+
 studentSuccessData <- studentSuccessData %>%
 
   mutate(
@@ -259,6 +300,49 @@ These attributes are continuous variables:
 
 ```
 
+### Data Transformations
+ 
+```{r}
+
+# Display data types of each column
+
+str(studentSuccessData)
+ 
+# Check for missing values
+
+sapply(studentSuccessData, function(x) sum(is.na(x)))
+ 
+# Perform necessary transformations
+
+# Fill missing values with the mean for numeric columns and mode for categorical columns
+
+studentSuccessData <- studentSuccessData %>%
+
+  mutate(across(where(is.numeric), ~ ifelse(is.na(.), mean(., na.rm = TRUE), .))) %>%
+
+  mutate(across(where(is.character), ~ ifelse(is.na(.), Mode(.), .)))
+ 
+# Function to calculate mode
+
+Mode <- function(x) {
+
+  ux <- unique(x)
+
+  ux[which.max(tabulate(match(x, ux)))]
+
+}
+ 
+# Convert categorical columns to factor type
+
+studentSuccessData <- studentSuccessData %>%
+  mutate(across(where(is.character), as.factor))
+
+# Check transformed data 
+
+summary(studentSuccessData)
+
+str(studentSuccessData)
+```
 
 \pagebreak
 ### Exploratory Data Analysis
