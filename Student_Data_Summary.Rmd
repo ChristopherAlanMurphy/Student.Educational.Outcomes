@@ -380,6 +380,15 @@ for (col in columns) {
 }
 ```
 
+
+Here is an example small multiple.
+
+```{r}
+base_graph <- ggplot(train, aes(Target)) + geom_bar()
+
+base_graph + facet_grid(cols=vars(Marital.status), rows=vars(Nacionality))
+```
+
 \pagebreak
 ### Data Transformation
 
