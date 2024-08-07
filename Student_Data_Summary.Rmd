@@ -263,6 +263,38 @@ These attributes are continuous variables:
 \pagebreak
 ### Exploratory Data Analysis
 
+Divide the data into a reserved test set (30%) and a train set (70%).
+
+```{r}
+set.seed(711)
+ind <- sample(c(TRUE, FALSE), size=nrow(studentSuccessData), replace=TRUE, prob=c(0.7, 0.3))
+train <- studentSuccessData[ind, ]
+test <- studentSuccessData[!ind, ]
+```
+
+```{r}
+ 
+columns <- colnames(train)
+# Loop through each column and create a plot
+for (col in columns) {
+  # Check if the column is numeric or categorical
+  if (is.numeric(train[[col]])) {
+    # Create a histogram for numeric columns
+    p <- ggplot(train, aes_string(x = col)) +
+      geom_histogram(binwidth = 1, fill = "blue", color = "black") +
+      ggtitle(paste("Histogram of", col)) +
+      theme_minimal()
+  } else {
+    # Create a bar plot for categorical columns
+    p <- ggplot(train, aes_string(x = col)) +
+      geom_bar(fill = "blue", color = "black") +
+      ggtitle(paste("Bar Plot of", col)) +
+      theme_minimal()
+  }
+  # Print the plot
+  print(p)
+}
+```
 
 \pagebreak
 ### Data Transformation
