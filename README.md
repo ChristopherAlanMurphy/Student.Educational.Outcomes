@@ -3,7 +3,7 @@ Syracuse University IST 707
 Machine Learning techniques to identify and evaluate various contributing factors on educational outcomes of students.
 
 # Project Overview:
-Working on factors
+Working on factors and git configuration.
  
 # Team Members: 
 Christopher Murphy, Padmaja Kurumaddali, La Monte Henry Piggy Yarroll
