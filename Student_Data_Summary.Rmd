@@ -551,6 +551,69 @@ base_graph <- ggplot(train, aes(Target)) + geom_bar()
 base_graph + facet_grid(cols=vars(Marital.status), rows=vars(Nacionality))
 ```
 
+*** Bi-Variate EDA
+
+```{r}
+
+# Plot for Age and Target
+
+ggplot(train, aes(x = Age.at.enrollment, y = Target)) +
+  geom_point() +
+  geom_smooth(method = "lm", col = "blue") +
+  labs(title = "Scatter Plot of Age.at.enrollment  vs Target",
+       x = "Age.at.enrollment ",
+       y = "Target") +
+  theme_minimal()
+
+```
+
+
+### 2. Mother's Qualification and Target
+```{r}
+# Box plot for Mother's Qualification and Target
+ggplot(train, aes(x = factor(Mother.s.qualification), y = Target)) +
+  geom_boxplot() +
+  labs(title = "Box Plot of Mother's Qualification vs Target",
+       x = "Mother's Qualification",
+       y = "Target") +
+  theme_minimal()
+```
+
+### 3. Father's Qualification and Target
+```{r}
+# Box plot for Father's Qualification and Target
+ggplot(train, aes(x = factor(Father.s.qualification), y = Target)) +
+  geom_boxplot() +
+  labs(title = "Box Plot of Father's Qualification vs Target",
+       x = "Father's Qualification",
+       y = "Target") +
+  theme_minimal()
+```
+
+### 4. Mother's Occupation, Father's Occupation, and Target
+```{r}
+# Faceted bar plot for Mother's and Father's Occupation vs Target
+ggplot(train, aes(x = factor(Mother.s.occupation), fill = factor(Target))) +
+  geom_bar(position = "dodge") +
+  facet_wrap(~ Father.s.occupation) +
+  labs(title = "Bar Plot of Mother's and Father's Occupation vs Target",
+       x = "Mother's Occupation",
+       fill = "Target") +
+  theme_minimal()
+```
+
+### 5. Previous Qualification and Target
+```{r}
+# Box plot for Previous Qualification and Target
+ggplot(train, aes(x = factor(Previous.qualification), y = Target)) +
+  geom_boxplot() +
+  labs(title = "Box Plot of Previous Qualification vs Target",
+       x = "Previous Qualification",
+       y = "Target") +
+  theme_minimal()
+```
+
+
 \pagebreak
 ### Data Transformation
 
