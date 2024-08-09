@@ -599,18 +599,22 @@ ggplot(train, aes(x = factor(Mother.s.occupation), fill = factor(Target))) +
   labs(title = "Bar Plot of Mother's and Father's Occupation vs Target",
        x = "Mother's Occupation",
        fill = "Target") +
-  theme_minimal()
+  theme_minimal() +
+  scale_fill_brewer(palette = "Set3") +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
 ```
 
 ### 5. Previous Qualification and Target
 ```{r}
 # Box plot for Previous Qualification and Target
-ggplot(train, aes(x = factor(Previous.qualification), y = Target)) +
-  geom_boxplot() +
-  labs(title = "Box Plot of Previous Qualification vs Target",
+ggplot(train, aes(x = factor(Previous.qualification), fill = factor(Target))) +
+  geom_bar(position = "dodge")  +
+  labs(title = "Bar Plot of Previous Qualification vs Target",
        x = "Previous Qualification",
-       y = "Target") +
-  theme_minimal()
+       fill = "Target") +
+  theme_minimal() +
+  scale_fill_brewer(palette = "Set3") +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
 ```
 
 
