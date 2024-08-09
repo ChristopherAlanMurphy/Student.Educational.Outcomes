@@ -168,10 +168,6 @@ Mode <- function(x) {
 # Convert categorical columns to factor type
 
 studentSuccessData <- studentSuccessData %>%
-  mutate(across(where(is.character), as.factor))
-
-
-studentSuccessData <- studentSuccessData %>%
 
   mutate(
 
