@@ -232,6 +232,8 @@ studentSuccessData <- studentSuccessData %>%
       "Journalism and Communication",
       "Basic Education",
       "Management (evening attendance)")),
+    
+    Daytime.evening.attendance. <- factor(Daytime.evening.attendance., levels = c(1, 0), labels = c("yes", "no")),
 
     Previous.qualification = factor(
       Previous.qualification,
@@ -432,7 +434,14 @@ Mother.s.occupation <- ordered(Mother.s.occupation, levels = c(0, 1, 2, 3, 4, 5,
   "Unskilled workers in extractive industry, construction, manufacturing and transport",
   "Meal preparation assistants",
   "Street vendors (except food) and street service providers"
-))
+)),
+Displaced <- factor(Displaced, levels = c(1, 0), labels = c("yes", "no")),
+Educational.special.needs <- factor(Educational.special.needs, levels = c(1, 0), labels = c("yes", "no")),
+Debtor <- factor(Debtor, levels = c(1, 0), labels = c("yes", "no")),
+Tuition.fees.up.to.date <- factor(Tuition.fees.up.to.date, levels = c(1, 0), labels = c("yes", "no")),
+Gender <- factor(Gender, levels = c(1, 0), labels = c("yes", "no")),
+Scholarship.holder <- factor(Scholarship.holder, levels = c(1, 0), labels = c("yes", "no")),
+International <- factor(International, levels = c(1, 0), labels = c("yes", "no"))
 )
 ```
 
