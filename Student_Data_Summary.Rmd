@@ -460,55 +460,6 @@ These attributes are continuous variables:
 
 ```
 
-<<<<<<< HEAD
-### Data Transformations
- 
-```{r}
-
-# Display data types of each column
-
-str(studentSuccessData)
- 
-# Check for missing values
-
-sapply(studentSuccessData, function(x) sum(is.na(x)))
- 
-# Perform necessary transformations
-
-# Fill missing values with the mean for numeric columns and mode for categorical columns
-
-studentSuccessData <- studentSuccessData %>%
-
-  mutate(across(where(is.numeric), ~ ifelse(is.na(.), mean(., na.rm = TRUE), .))) %>%
-
-  mutate(across(where(is.character), ~ ifelse(is.na(.), Mode(.), .)))
- 
-# Function to calculate mode
-
-Mode <- function(x) {
-
-  ux <- unique(x)
-
-  ux[which.max(tabulate(match(x, ux)))]
-
-}
- 
-# Convert categorical columns to factor type
-
-studentSuccessData <- studentSuccessData %>%
-  mutate(across(where(is.character), as.factor))
-
-# Check transformed data 
-
-summary(studentSuccessData)
-
-str(studentSuccessData)
-
-
-```
-=======
->>>>>>> 11d0bb254346f1442c94cbdb6cb77c2f56638423
-
 \pagebreak
 ### Exploratory Data Analysis
 
