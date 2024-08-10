@@ -16,7 +16,7 @@ knitr::opts_chunk$set(echo = TRUE)
 #using function provided by Professor Gary Krudys.
 
 #specify the packages needed
-packages=c("tidyverse", "ggplot2", "mclust", "rpart", "rpart.plot", "caret", "arules", "arulesViz", "corrplot", "Hmisc")
+packages=c("tidyverse", "ggplot2", "mclust", "rpart", "rpart.plot", "caret", "arules", "arulesViz", "corrplot", "Hmisc", "cluster")
 
 #use this function to check if each package is on the local machine
 #if a package is installed, it will be loaded
@@ -510,7 +510,8 @@ Here is an example small multiple.
 
 ```{r}
 train_m <- sapply(train, as.numeric)
-train_m <- train_m[complete.cases(train_m), ]
+train_complete <- complete.cases(train_m)
+train_m <- train_m[train_complete, ]
 train.cor <- cor(train_m, method=c("pearson"))
 corrplot(train.cor, tl.cex = 0.2)
 heatmap(train.cor)
@@ -685,8 +686,43 @@ Here are the clusters grouped by Target.
 #     theme(plot.title = element_text(hjust=0.5),  text=element_text(size=15))
 ```
 
+## k-Means Model
 
-## Decision Tree Model  ## rpart Model  ## rpart Model performance
+```{r}
+train_km <- train_m
+rownames(train_km) <- train[train_complete, ]$Target
+
+set.seed(20)
+```
+
+Seven clusters for k-Means produces a pleasing result with the following parameters.
+
+```{r, echo=TRUE}
+Clusters <- kmeans(train_km, 12, iter.max = 100, nstart = 7, algorithm="Hartigan-Wong")
+```
+
+```{r}
+summary(Clusters)
+Clusters$cluster[1:14]
+```
+
+```{r}
+train_km2 <- train[train_complete, ]
+train_km2$cluster <- as.factor(Clusters$cluster)
+clusplot(train_km, train_km2$cluster, color=TRUE, shade=TRUE, labels=0, lines=0)
+```
+
+This dataset does not yield to k-Means clustering, at least with all the numeric variables.
+```{r}
+ggplot(data=train_km2, aes(x=Target, fill=cluster)) +
+    geom_bar(stat="count") +
+    labs(title = "K = 12") +
+    theme(plot.title = element_text(hjust=0.5),  text=element_text(size=15))
+```
+
+
+
+## Decision Tree Model
 
 ### Model 3 Decision Tree Classification 
 
