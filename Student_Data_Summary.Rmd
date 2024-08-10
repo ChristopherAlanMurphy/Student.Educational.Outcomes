@@ -336,11 +336,7 @@ studentSuccessData <- studentSuccessData %>%
 #   "Specialized higher studies course",
 #   "Professional higher technical course",
 #   "Higher Education - Master (2nd cycle)",
-#   "Higher Educati> emdata_num <- sapply(emdata, as.numeric)
-> emdata_num_complete <- emdata_num[complete.cases(emdata_num), ]
-> completez <- z[complete.cases(emdata_num), ]
-> msEst <- mstep(emdata_num_complete, 'EEE', completez)
-on - Doctorate (3rd cycle)"
+#   "Higher Education - Doctorate (3rd cycle)"
 # )),
 # 
 # Mother.s.occupation <- ordered(Mother.s.occupation, levels = c(0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 90, 99, 122, 123, 125, 131, 132, 134, 141, 143, 144, 151, 152, 153, 171, 173, 175, 191, 192, 193, 194), labels = c(
@@ -457,10 +453,6 @@ summary(studentSuccessData)
 These attributes are continuous variables:
 ["Unemployment.rate", "Inflation.rate", "GDP"]                            
 
-#### The "XYZ" Attribute
-```{r echo=FALSE}
-
-```
 
 \pagebreak
 ### Exploratory Data Analysis
@@ -596,23 +588,6 @@ ggplot(train, aes(x = factor(Previous.qualification), fill = factor(Target))) +
 ```
 
 
-\pagebreak
-### Data Transformation
-
-#### Step 1
-```{r}
-
-```
-
-#### Step 2
-```{r}
-
-```
-
-#### Step 3
-```{r}
-
-```
 
 
 \pagebreak
@@ -681,7 +656,60 @@ plot(rules_graduate_sorted[1:10], method="graph", engine = "interactive")
 ```
 
 
-### Model 2 DEcision Tree Classification
+
+
+
+
+
+
+## EM Model
+
+I can not make this model produce meaningful results.
+```{r}
+library(mclust)
+sum(is.na(train))
+
+train_km <- select(train, !c())
+modelName = 'VVI'
+emdata = train
+z = unmap(train[['Target']])
+emdata_num <- sapply(emdata, as.numeric)
+emdata_num_complete <- emdata_num[complete.cases(emdata_num), ]
+completez <- z[complete.cases(emdata_num), ]
+msEst <- mstep(emdata_num_complete, 'EEE', completez)
+modelName = msEst$modelName
+parameters = msEst$parameters
+em_model <- em(emdata, modelName, parameters)
+summary(em_model)
+emclusters <- apply(em_model[["z"]], 1, which.max)
+emclusters
+ emdata$cluster
+ emdata$Target <- train$Target
+
+
+
+
+
+
+
+
+
+
+
+```
+
+Here are the clusters grouped by Target.  
+```{r}
+# ggplot(data=emdata, aes(x=Target, fill=cluster)) +
+#     geom_bar(stat="count") +
+#     labs(title = "K = ?") +
+#     theme(plot.title = element_text(hjust=0.5),  text=element_text(size=15))
+```
+
+
+## Decision Tree Model  ## rpart Model  ## rpart Model performance
+
+### Model 3 DEcision Tree Classification 
 
 ```{r}
 
@@ -730,6 +758,7 @@ for (col in names(test)) {
 }
 test$Target <- NA
 predictions <- predict(tree_model, test[, !names(test) %in% "Target"], type = "class")
+# GETTING ERROR WHILE TESTING THE MODEL. IF THIS IS CLEARED, WE ARE GOOD TO GO!
 #predictions <- predict(tree_model, test, type = "class")
 
 # Confusion matrix
@@ -737,64 +766,7 @@ confusionMatrix(predictions, test$Target)
 
 ```
 
-\newpage
-# Results
 
-## Attribute Analysis
-
-
-#### the "ABC" attribute
-```{r}
-
-```
-
-
-#### the "XYZ" attribute
-```{r}
-
-```
-
-
-
-\newpage
-## ARM Model
-
-## EM Model
-
-I can not make this model produce meaningful results.
-```{r}
-train_km <- select(train, !c())
-modelName = 'VVI'
-emdata = train
-z = unmap(train[['Target']])
-emdata_num <- sapply(emdata, as.numeric)
-emdata_num_complete <- emdata_num[complete.cases(emdata_num), ]
-completez <- z[complete.cases(emdata_num), ]
-msEst <- mstep(emdata_num_complete, 'EEE', completez)
-modelName = msEst$modelName
-parameters = msEst$parameters
-em_model <- em(emdata, modelName, parameters)
-summary(em_model)
-emclusters <- apply(em_model[["z"]], 1, which.max)
-emclusters
-# emdata$cluster
-# emdata$Target <- train$Target
-```
-
-Here are the clusters grouped by Target.  
-```{r}
-# ggplot(data=emdata, aes(x=Target, fill=cluster)) +
-#     geom_bar(stat="count") +
-#     labs(title = "K = ?") +
-#     theme(plot.title = element_text(hjust=0.5),  text=element_text(size=15))
-```
-
-
-## Decision Tree Model
-
-## rpart Model
-
-## rpart Model performance
 
 ## Additional Models
 
