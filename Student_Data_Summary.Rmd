@@ -469,6 +469,7 @@ train <- studentSuccessData[ind, ]
 test <- studentSuccessData[!ind, ]
 
 colnames(train)
+view(train)
 ```
 
 ```{r}
@@ -541,32 +542,44 @@ ggplot(train, aes(x = factor(Mother.s.qualification), fill = factor(Target))) +
 
 ### 3. Father's Qualification and Target
 ```{r}
-# Box plot for Father's Qualification and Target
-ggplot(train, aes(x = factor(Father.s.qualification), y = Target)) +
-  geom_boxplot() +
-  labs(title = "Box Plot of Father's Qualification vs Target",
+# Bar plot for Father's Qualification and Target
+ggplot(train, aes(x = factor(Father.s.qualification), fill = factor(Target))) +
+  geom_bar(position = "dodge") +
+  labs(title = "Bar Plot of Father's Qualification vs Target",
        x = "Father's Qualification",
-       y = "Target") +
-  theme_minimal()
+       fill = "Target") +
+  theme_minimal() +
+  scale_fill_manual(values = c("#DC143C", "#1f77b4", "#2ca02c"))  
+
 ```
 
 ### 4. Mother's Occupation, Father's Occupation, and Target
 ```{r}
-# Faceted bar plot for Mother's and Father's Occupation vs Target
+# Bar plot for Father's Occupation and Target
+ggplot(train, aes(x = factor(Father.s.occupation), fill = factor(Target))) +
+  geom_bar(position = "dodge") +
+  labs(title = "Bar Plot of Father's Occupation vs Target",
+       x = "Father's Occupation",
+       fill = "Target") +
+  theme_minimal() +
+  scale_fill_brewer(palette = "Set3") +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+# Bar plot for Mother's Occupation and Target
 ggplot(train, aes(x = factor(Mother.s.occupation), fill = factor(Target))) +
   geom_bar(position = "dodge") +
-  facet_wrap(~ Father.s.occupation) +
-  labs(title = "Bar Plot of Mother's and Father's Occupation vs Target",
+  labs(title = "Bar Plot of Mother's Occupation vs Target",
        x = "Mother's Occupation",
        fill = "Target") +
   theme_minimal() +
   scale_fill_brewer(palette = "Set3") +
   theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
 ```
 
 ### 5. Previous Qualification and Target
 ```{r}
-# Box plot for Previous Qualification and Target
+# Bar plot for Previous Qualification and Target
 ggplot(train, aes(x = factor(Previous.qualification), fill = factor(Target))) +
   geom_bar(position = "dodge")  +
   labs(title = "Bar Plot of Previous Qualification vs Target",
@@ -600,23 +613,124 @@ ggplot(train, aes(x = factor(Previous.qualification), fill = factor(Target))) +
 \pagebreak
 ## Models
 
-### Model 1
+### Model 1 Association Rule Mining
+
+
 
 #### Step 1
 ```{r}
+# For association rule mining, we need to convert the data into transactions:
+library(arules)
+
+# Identify numeric columns
+numeric_columns <- sapply(train, is.numeric)
+
+# Discretize numeric columns
+for (col in names(train)[numeric_columns]) {
+  train[[col]] <- discretize(train[[col]], method = "interval", breaks = 5)
+}
+
+transaction_id  <- as.character(train[["transid"]])
+train$transid <- NULL
+transactions <- as(train, "transactions")
 
 ```
 
+
 #### Step 2
 ```{r}
-
+# Generate association rules
+#rules <- apriori(transactions, parameter = list(supp = 0.2, conf = 0.8, minlen = 2))
+rules_dropout <- apriori(transactions, parameter = list(supp = 0.01, conf = 0.5, target = "rules"),
+                 appearance = list(rhs = c("Target=Dropout" ), default = "lhs") , control = list(verbose=F))
+rules_graduate <- apriori(transactions, parameter = list(supp = 0.01, conf = 0.5, target = "rules"),
+                 appearance = list(rhs = c("Target=Graduate" ), default = "lhs") , control = list(verbose=F))
 ```
 
 #### Step 3
 ```{r}
 
+library(arulesViz)
+
+# Inspect the top rules of Dropout
+#inspect(head(sort(rules,decreasing = TRUE,  by = "lift"), 5))
+rules_dropout_sorted <- sort(rules_dropout,decreasing = TRUE, by = "lift")
+inspect(rules_dropout_sorted[1:10])
+rules_dropout_sorted <- sort(rules_dropout_sorted,decreasing = TRUE, by = "confidence")
+inspect(rules_dropout_sorted[1:10])
+summary(rules_dropout_sorted)
+plot(rules_dropout_sorted[1:10], method="graph", engine = "interactive")
+
+
+```
+```{r}
+
+# Inspect Top rules of GRaduate
+
+rules_graduate_sorted <- sort(rules_graduate ,decreasing = TRUE, by = "lift")
+inspect(rules_graduate_sorted[1:10])
+rules_graduate_sorted <- sort(rules_graduate_sorted,decreasing = TRUE, by = "confidence")
+inspect(rules_graduate_sorted[1:10])
+summary(rules_graduate_sorted)
+plot(rules_graduate_sorted[1:10], method="graph", engine = "interactive")
 ```
 
+
+### Model 2 DEcision Tree Classification
+
+```{r}
+
+### For decision tree classification, we'll use the `rpart` package:
+
+# We need to split the dataset, but since we already partitioned the dataset into train and test, we will directly use that for training our model.
+
+library(rpart)
+library(rpart.plot)
+
+# Train the decision tree model
+tree_model <- rpart(Target ~ ., data = train, method = "class")
+
+# Plot the decision tree
+
+plot(tree_model)
+
+# Prune the tree to simplify it
+pruned_tree <- prune(tree_model, cp = tree_model$cptable[which.min(tree_model$cptable[,"xerror"]),"CP"])
+
+# Plot the pruned tree with improved readability
+par(mar = c(5, 4, 4, 2) + 0.1)  # Adjust the margins as needed
+rpart.plot(pruned_tree, 
+           type = 2, 
+           extra = 104, 
+           fallen.leaves = TRUE, 
+           cex = 0.8,  # Adjust text size
+           box.palette = "RdYlGn", 
+           shadow.col = "gray", 
+           nn = TRUE,
+           faclen = 0,  # Full names
+           varlen = 0,  # Full variable names
+           compress = TRUE)  # Compress the tree
+
+
+
+text(tree_model, use.n = TRUE)
+
+# Predict on the test data
+view(test)
+sum(is.na(test))
+for (col in names(test)) {
+    if (is.factor(test[[col]])) {
+        levels(test[[col]]) <- levels(train[[col]])
+    }
+}
+test$Target <- NA
+predictions <- predict(tree_model, test[, !names(test) %in% "Target"], type = "class")
+#predictions <- predict(tree_model, test, type = "class")
+
+# Confusion matrix
+confusionMatrix(predictions, test$Target)
+
+```
 
 \newpage
 # Results
