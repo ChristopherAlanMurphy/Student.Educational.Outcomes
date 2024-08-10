@@ -16,7 +16,7 @@ knitr::opts_chunk$set(echo = TRUE)
 #using function provided by Professor Gary Krudys.
 
 #specify the packages needed
-packages=c("tidyverse", "ggplot2", "mclust")
+packages=c("tidyverse", "ggplot2", "mclust", "rpart", "rpart.plot", "arules", "caret")
 
 #use this function to check if each package is on the local machine
 #if a package is installed, it will be loaded
@@ -711,7 +711,7 @@ Here are the clusters grouped by Target.
 
 ## Decision Tree Model  ## rpart Model  ## rpart Model performance
 
-### Model 3 DEcision Tree Classification 
+### Model 3 Decision Tree Classification 
 
 ```{r}
 
