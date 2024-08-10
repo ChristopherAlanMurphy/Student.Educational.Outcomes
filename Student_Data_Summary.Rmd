@@ -602,17 +602,19 @@ ggplot(train, aes(x = factor(Previous.qualification), fill = factor(Target))) +
 # For association rule mining, we need to convert the data into transactions:
 library(arules)
 
+train.arm <- train
+
 # Identify numeric columns
 numeric_columns <- sapply(train, is.numeric)
 
 # Discretize numeric columns
 for (col in names(train)[numeric_columns]) {
-  train[[col]] <- discretize(train[[col]], method = "interval", breaks = 5)
+  train.arm[[col]] <- discretize(train[[col]], method = "interval", breaks = 5)
 }
 
-transaction_id  <- as.character(train[["transid"]])
-train$transid <- NULL
-transactions <- as(train, "transactions")
+transaction_id  <- as.character(train.arm[["transid"]])
+train.arm$transid <- NULL
+transactions <- as(train.arm, "transactions")
 
 ```
 
