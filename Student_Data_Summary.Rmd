@@ -200,6 +200,8 @@ studentSuccessData <- studentSuccessData %>%
         "Change of institution/course (International)")),
 
     Application.order = factor(Application.order, ordered=TRUE, levels = c(1, 2, 3, 4, 5, 6), labels = c("1st", "2nd", "3rd", "4th", "5th", "6th")),
+    
+    Target = factor(Target),
 
     Course = factor(Course, levels = c(33,171,8014,9003,9070,9085,9119,9130,9147,9238,9254,9500,9556,9670,9773,9853,9991), labels = c(
       "Biofuel Production Technologies",
@@ -464,9 +466,6 @@ set.seed(711)
 ind <- sample(c(TRUE, FALSE), size=nrow(studentSuccessData), replace=TRUE, prob=c(0.7, 0.3))
 train <- studentSuccessData[ind, ]
 test <- studentSuccessData[!ind, ]
-
-colnames(train)
-view(train)
 ```
 
 ```{r}
@@ -502,9 +501,9 @@ for (col in columns) {
 Here is an example small multiple.
 
 ```{r}
-base_graph <- ggplot(train, aes(Target)) + geom_bar()
+#base_graph <- ggplot(train, aes(Target)) + geom_bar()
 
-base_graph + facet_grid(cols=vars(Marital.status), rows=vars(Nacionality))
+#base_graph + facet_grid(cols=vars(Marital.status), rows=vars(Nacionality))
 ```
 
 *** Bi-Variate EDA
@@ -622,32 +621,36 @@ transactions <- as(train.arm, "transactions")
 #### Step 2
 ```{r}
 # Generate association rules
-#rules <- apriori(transactions, parameter = list(supp = 0.2, conf = 0.8, minlen = 2))
 rules_dropout <- apriori(transactions, parameter = list(supp = 0.01, conf = 0.5, target = "rules"),
                  appearance = list(rhs = c("Target=Dropout" ), default = "lhs") , control = list(verbose=F))
 rules_graduate <- apriori(transactions, parameter = list(supp = 0.01, conf = 0.5, target = "rules"),
                  appearance = list(rhs = c("Target=Graduate" ), default = "lhs") , control = list(verbose=F))
 ```
 
+
 #### Step 3
 ```{r}
 
 library(arulesViz)
 
-# Inspect the top rules of Dropout
-#inspect(head(sort(rules,decreasing = TRUE,  by = "lift"), 5))
+# Inspect the top rules of Dropout by lift
 rules_dropout_sorted <- sort(rules_dropout,decreasing = TRUE, by = "lift")
 inspect(rules_dropout_sorted[1:10])
+
+# Inspect the top rules of Dropout by confidence
 rules_dropout_sorted <- sort(rules_dropout_sorted,decreasing = TRUE, by = "confidence")
 inspect(rules_dropout_sorted[1:10])
-summary(rules_dropout_sorted)
-plot(rules_dropout_sorted[1:10], method="graph", engine = "interactive")
 
+#summarize the rules
+summary(rules_dropout_sorted)
+
+#visualize
+plot(rules_dropout_sorted[1:10], method="graph", engine = "interactive")
 
 ```
 ```{r}
 
-# Inspect Top rules of GRaduate
+# Inspect Top rules of graduate
 
 rules_graduate_sorted <- sort(rules_graduate ,decreasing = TRUE, by = "lift")
 inspect(rules_graduate_sorted[1:10])
@@ -662,43 +665,6 @@ plot(rules_graduate_sorted[1:10], method="graph", engine = "interactive")
 
 
 
-
-
-## EM Model
-
-I can not make this model produce meaningful results.
-```{r}
-library(mclust)
-sum(is.na(train))
-
-train_km <- select(train, !c())
-modelName = 'VVI'
-emdata = train
-z = unmap(train[['Target']])
-emdata_num <- sapply(emdata, as.numeric)
-emdata_num_complete <- emdata_num[complete.cases(emdata_num), ]
-completez <- z[complete.cases(emdata_num), ]
-msEst <- mstep(emdata_num_complete, 'EEE', completez)
-modelName = msEst$modelName
-parameters = msEst$parameters
-em_model <- em(emdata, modelName, parameters)
-summary(em_model)
-emclusters <- apply(em_model[["z"]], 1, which.max)
-emclusters
- emdata$cluster
- emdata$Target <- train$Target
-
-
-
-
-
-
-
-
-
-
-
-```
 
 Here are the clusters grouped by Target.  
 ```{r}
@@ -719,21 +685,15 @@ Here are the clusters grouped by Target.
 
 # We need to split the dataset, but since we already partitioned the dataset into train and test, we will directly use that for training our model.
 
-library(rpart)
-library(rpart.plot)
-
 # Train the decision tree model
 tree_model <- rpart(Target ~ ., data = train, method = "class")
-
-# Plot the decision tree
-
-plot(tree_model)
 
 # Prune the tree to simplify it
 pruned_tree <- prune(tree_model, cp = tree_model$cptable[which.min(tree_model$cptable[,"xerror"]),"CP"])
 
 # Plot the pruned tree with improved readability
 par(mar = c(5, 4, 4, 2) + 0.1)  # Adjust the margins as needed
+
 rpart.plot(pruned_tree, 
            type = 2, 
            extra = 104, 
@@ -750,21 +710,20 @@ rpart.plot(pruned_tree,
 
 text(tree_model, use.n = TRUE)
 
-# Predict on the test data
-view(test)
-sum(is.na(test))
-for (col in names(test)) {
-    if (is.factor(test[[col]])) {
-        levels(test[[col]]) <- levels(train[[col]])
-    }
-}
-test$Target <- NA
-predictions <- predict(tree_model, test[, !names(test) %in% "Target"], type = "class")
-# GETTING ERROR WHILE TESTING THE MODEL. IF THIS IS CLEARED, WE ARE GOOD TO GO!
-#predictions <- predict(tree_model, test, type = "class")
+#capture the values as reference to compare in the confusion matrix
+test.target <- test$Target
+
+
+#drop the orginal target value
+test %>% select(-Target)
+
+
+#create the predictions
+predictions <- predict(tree_model, newdata=test, type = "class")
+
 
 # Confusion matrix
-confusionMatrix(predictions, test$Target)
+confusionMatrix(predictions, test.target)
 
 ```
 
