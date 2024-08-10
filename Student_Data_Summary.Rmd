@@ -16,7 +16,7 @@ knitr::opts_chunk$set(echo = TRUE)
 #using function provided by Professor Gary Krudys.
 
 #specify the packages needed
-packages=c("tidyverse")
+packages=c("tidyverse", "ggplot2", "mclust")
 
 #use this function to check if each package is on the local machine
 #if a package is installed, it will be loaded
@@ -199,7 +199,7 @@ studentSuccessData <- studentSuccessData %>%
         "Short cycle diploma holders",
         "Change of institution/course (International)")),
 
-    Application.order = factor(Application.order, levels = c(1, 2, 3, 4, 5, 6), labels = c("1st", "2nd", "3rd", "4th", "5th", "6th")),
+    Application.order = factor(Application.order, ordered=TRUE, levels = c(1, 2, 3, 4, 5, 6), labels = c("1st", "2nd", "3rd", "4th", "5th", "6th")),
 
     Course = factor(Course, levels = c(33,171,8014,9003,9070,9085,9119,9130,9147,9238,9254,9500,9556,9670,9773,9853,9991), labels = c(
       "Biofuel Production Technologies",
@@ -336,7 +336,11 @@ studentSuccessData <- studentSuccessData %>%
 #   "Specialized higher studies course",
 #   "Professional higher technical course",
 #   "Higher Education - Master (2nd cycle)",
-#   "Higher Education - Doctorate (3rd cycle)"
+#   "Higher Educati> emdata_num <- sapply(emdata, as.numeric)
+> emdata_num_complete <- emdata_num[complete.cases(emdata_num), ]
+> completez <- z[complete.cases(emdata_num), ]
+> msEst <- mstep(emdata_num_complete, 'EEE', completez)
+on - Doctorate (3rd cycle)"
 # )),
 # 
 # Mother.s.occupation <- ordered(Mother.s.occupation, levels = c(0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 90, 99, 122, 123, 125, 131, 132, 134, 141, 143, 144, 151, 152, 153, 171, 173, 175, 191, 192, 193, 194), labels = c(
@@ -374,7 +378,8 @@ studentSuccessData <- studentSuccessData %>%
 #   "Meal preparation assistants"
 # )),
 # 
-#  Father.s.occupation <- ordered(Father.s.occupation, levels = c(0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 90, 99, 101, 102, 103, 112, 114, 121, 122, 123, 124, 131, 132, 134, 135, 141, 143, 144, 151, 152, 153, 154, 161, 163, 171, 172, 174, 175, 181, 182, 183, 192, 193, 194, 195), labels = c(
+#  Father.s.occupation <- factor(Father.s.occupation,
+# levels = c(0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 90, 99, 101, 102, 103, 112, 114, 121, 122, 123, 124, 131, 132, 134, 135, 141, 143, 144, 151, 152, 153, 154, 161, 163, 171, 172, 174, 175, 181, 182, 183, 192, 193, 194, 195), labels = c(
 #   "Student",
 #   "Representatives of the Legislative Power and Executive Bodies, Directors, Directors and Executive Managers",
 #   "Specialists in Intellectual and Scientific Activities",
@@ -752,12 +757,46 @@ confusionMatrix(predictions, test$Target)
 
 
 \newpage
-## Model Results: Model 1
+## ARM Model
+
+## EM Model
+
+I can not make this model produce meaningful results.
+```{r}
+train_km <- select(train, !c())
+modelName = 'VVI'
+emdata = train
+z = unmap(train[['Target']])
+emdata_num <- sapply(emdata, as.numeric)
+emdata_num_complete <- emdata_num[complete.cases(emdata_num), ]
+completez <- z[complete.cases(emdata_num), ]
+msEst <- mstep(emdata_num_complete, 'EEE', completez)
+modelName = msEst$modelName
+parameters = msEst$parameters
+em_model <- em(emdata, modelName, parameters)
+summary(em_model)
+emclusters <- apply(em_model[["z"]], 1, which.max)
+emclusters
+# emdata$cluster
+# emdata$Target <- train$Target
+```
+
+Here are the clusters grouped by Target.  
+```{r}
+# ggplot(data=emdata, aes(x=Target, fill=cluster)) +
+#     geom_bar(stat="count") +
+#     labs(title = "K = ?") +
+#     theme(plot.title = element_text(hjust=0.5),  text=element_text(size=15))
+```
 
 
+## Decision Tree Model
 
-## Model Results: Model 2
+## rpart Model
 
+## rpart Model performance
+
+## Additional Models
 
 \pagebreak
 # Conclusions
