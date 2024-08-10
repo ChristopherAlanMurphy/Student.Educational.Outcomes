@@ -669,10 +669,10 @@ emclusters
 
 Here are the clusters grouped by Target.  
 ```{r}
-ggplot(data=emdata, aes(x=Target, fill=cluster)) +
-    geom_bar(stat="count") +
-    labs(title = "K = ?") +
-    theme(plot.title = element_text(hjust=0.5),  text=element_text(size=15))
+# ggplot(data=emdata, aes(x=Target, fill=cluster)) +
+#     geom_bar(stat="count") +
+#     labs(title = "K = ?") +
+#     theme(plot.title = element_text(hjust=0.5),  text=element_text(size=15))
 ```
 
 
