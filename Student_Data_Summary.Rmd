@@ -16,7 +16,7 @@ knitr::opts_chunk$set(echo = TRUE)
 #using function provided by Professor Gary Krudys.
 
 #specify the packages needed
-packages=c("tidyverse", "ggplot2", "mclust", "rpart", "rpart.plot", "caret", "arules", "arulesViz")
+packages=c("tidyverse", "ggplot2", "mclust", "rpart", "rpart.plot", "caret", "arules", "arulesViz", "corrplot", "Hmisc")
 
 #use this function to check if each package is on the local machine
 #if a package is installed, it will be loaded
@@ -506,7 +506,17 @@ Here is an example small multiple.
 #base_graph + facet_grid(cols=vars(Marital.status), rows=vars(Nacionality))
 ```
 
-*** Bi-Variate EDA
+### Correllations
+
+```{r}
+train_m <- sapply(train, as.numeric)
+train_m <- train_m[complete.cases(train_m), ]
+train.cor <- cor(train_m, method=c("spearman"))
+heatmap(train.cor)
+```
+
+
+### Bi-Variate EDA
 
 ```{r}
 
