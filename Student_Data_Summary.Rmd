@@ -16,7 +16,7 @@ knitr::opts_chunk$set(echo = TRUE)
 #using function provided by Professor Gary Krudys.
 
 #specify the packages needed
-packages=c("tidyverse", "ggplot2", "mclust", "rpart", "rpart.plot", "arules", "caret")
+packages=c("tidyverse", "ggplot2", "mclust", "rpart", "rpart.plot", "caret", "arules", "arules.viz")
 
 #use this function to check if each package is on the local machine
 #if a package is installed, it will be loaded
