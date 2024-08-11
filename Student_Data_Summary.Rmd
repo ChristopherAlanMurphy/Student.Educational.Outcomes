@@ -16,7 +16,7 @@ knitr::opts_chunk$set(echo = TRUE)
 #using function provided by Professor Gary Krudys.
 
 #specify the packages needed
-packages=c("tidyverse", "ggplot2", "mclust", "rpart", "rpart.plot", "caret", "arules", "arulesViz", "corrplot", "Hmisc", "cluster")
+packages=c("tidyverse", "ggplot2", "mclust", "rpart", "rpart.plot", "caret", "arules", "arulesViz", "corrplot", "Hmisc", "cluster", "knitr")
 
 #use this function to check if each package is on the local machine
 #if a package is installed, it will be loaded
@@ -734,10 +734,13 @@ ggplot(data=train_km2, aes(x=Target, fill=cluster)) +
 
 # Train the decision tree model
 tree_model <- rpart(Target ~ ., data = train, method = "class")
+```
 
+```{r}
 # Prune the tree to simplify it
 pruned_tree <- prune(tree_model, cp = tree_model$cptable[which.min(tree_model$cptable[,"xerror"]),"CP"])
-
+```
+```{r}
 # Plot the pruned tree with improved readability
 par(mar = c(5, 4, 4, 2) + 0.1)  # Adjust the margins as needed
 
@@ -753,10 +756,10 @@ rpart.plot(pruned_tree,
            varlen = 0,  # Full variable names
            compress = TRUE)  # Compress the tree
 
+# text(pruned_tree, use.n = TRUE)
+```
 
-
-text(tree_model, use.n = TRUE)
-
+```{r}
 #capture the values as reference to compare in the confusion matrix
 test.target <- test$Target
 
@@ -771,7 +774,7 @@ predictions <- predict(tree_model, newdata=test, type = "class")
 
 # Confusion matrix
 confusionMatrix(predictions, test.target)
-
+table(predictions, test.target)
 ```
 
 
