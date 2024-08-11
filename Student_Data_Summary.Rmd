@@ -513,7 +513,7 @@ train_m <- sapply(train, as.numeric)
 train_complete <- complete.cases(train_m)
 train_m <- train_m[train_complete, ]
 train.cor <- cor(train_m, method=c("pearson"))
-corrplot(train.cor, tl.cex = 0.2)
+corrplot(train.cor, tl.cex = 0.3)
 heatmap(train.cor)
 ```
 
