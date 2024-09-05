@@ -130,16 +130,14 @@ https://www.kaggle.com/code/mdismielhossenabir/student-s-dropout-and-academic-su
 * Target: The target variable indicating student outcome (e.g., Dropout, Academic Success).
 
 
-\pagebreak
-### Data Attribute Analysis
-The following section explores the nature of the attributes in the dataset.
-
 
 \pagebreak
 
 ### Data Transformations
 
-```{r echo=FALSE}
+First, fill missing values with the mean for numeric columns and mode for categorical columns.
+
+```{r include=FALSE}
 # Perform necessary transformations
 
 # Fill missing values with the mean for numeric columns and mode for categorical columns
@@ -162,8 +160,9 @@ Mode <- function(x) {
 ```
 
 
+Second, convert categorical columns to type Factor.
 
-```{r echo=FALSE}
+```{r include=FALSE}
 
 # Convert categorical columns to factor type
 
@@ -437,16 +436,29 @@ studentSuccessData <- studentSuccessData %>%
 ```
 
 
+Show the structure of the data frame after transformation:
+
 ```{r}
 #validate structure after attribute transformation
 str(studentSuccessData)
 ```
 
 
-#### Data with factors
+
+Show the summary of the data frame after transformation:
 
 ```{r}
 summary(studentSuccessData)
+```
+
+
+Finally, remove any incomplete observations from the data frame.
+
+```{r include=FALSE}
+
+# Remove rows with any NA values
+studentSuccessData <- studentSuccessData[complete.cases(studentSuccessData), ]
+
 ```
 
 
@@ -461,17 +473,29 @@ These attributes are continuous variables:
 
 Divide the data into a reserved test set (30%) and a train set (70%).
 
-```{r}
+```{r include=FALSE}
 set.seed(711)
 ind <- sample(c(TRUE, FALSE), size=nrow(studentSuccessData), replace=TRUE, prob=c(0.7, 0.3))
 train <- studentSuccessData[ind, ]
 test <- studentSuccessData[!ind, ]
 ```
 
-```{r}
-colnames(train)
+
+Copy the test and train datasets to create an SVM-specific test and train data sets.
+
+```{r include=FALSE}
+#capture new data frames to isolate to SVM
+svm_train <- train
+svm_test <- test
+
+# remove labels from the test set
+svm_test_label <- svm_test$Target
+
+svm_test <- svm_test[,-1] 
 ```
 
+
+The following plots describe the attribute distributions.
 
 ```{r}
  
@@ -498,7 +522,7 @@ for (col in columns) {
 ```
 
 
-Here is an example small multiple.
+the following graph shows an example of a small multiple from the dataset.
 
 ```{r}
 #base_graph <- ggplot(train, aes(Target)) + geom_bar()
@@ -536,6 +560,7 @@ ggplot(train, aes(x = Age.at.enrollment, y = Target)) +
 
 
 ### 2. Mother's Qualification and Target
+
 ```{r}
 # Bar plot for Mother's Qualification and Target
 ggplot(train, aes(x = factor(Mother.s.qualification), fill = factor(Target))) +
@@ -775,6 +800,159 @@ predictions <- predict(tree_model, newdata=test, type = "class")
 # Confusion matrix
 confusionMatrix(predictions, test.target)
 table(predictions, test.target)
+```
+
+### Model 4 Support Vector Machine with Linear Kernel
+
+A Support Vector machine with a linear kernel model is trained on the training data using 2-fold cross validation.  The model leverages an expanded grid to test for the following values of the C hyperparameter: 0.1, 1, 10. C is a regularization parameter that controls the balance between achieving a low error and minimizing the model complexity.  
+
+The model also is configured to preprocess the training data to remove attributes with 0 variance, and apply centering across all of the samples.  This centers the predictors by subtracting the mean of each predictor from the data, standardizing the data so that the mean of each predictor is zero.
+
+```{r include=FALSE}
+# Define train control for SVM
+# Run with 2-fold cross validation
+# Compute performance metrics for multiclass classification problem
+# save predictions for the final model
+train_control_svm_linear = trainControl(
+  method = "cv",
+  number = 2,  # 2-fold cross-validation
+  summaryFunction = multiClassSummary,
+  savePredictions = "final"
+)
+
+#create a dataframe to specify the values of the C hyper-parameter (cost) to try when tuning the model.
+#C is a regularization parameter that controls the balance between achieving a low error and minimizing the model complexity.
+#A higher C value means the model will fit the training data more closely.
+#A lower C value means the model will be more general.
+tune_grid = expand.grid(C = c(0.1, 1, 10))
+
+# Train SVM model with linear kernel and preprocessing included directly in the train function
+# Pre-process removes attributes with 0 variance apply centering across all samples
+svm_linear_model = caret::train(
+  Target ~ ., 
+  data = svm_train, 
+  method = "svmLinear",
+  trControl = train_control_svm_linear,
+  preProcess = c("zv","center"),  
+  tuneGrid = tune_grid
+)
+```
+
+
+The following shows the SVM linear model statistics for each value of the C hyper-parameter used to tune the model:
+
+```{r echo=FALSE}
+# View SVM linear model statistics
+print(svm_linear_model)
+```
+
+The following plot shows the Accuracy of the SVM Linear model against the 3 cost hyperparameters.
+
+```{r echo=FALSE}
+# Plot the SMV Linear model performance
+plot(svm_linear_model)
+```
+
+The following reports the Confusion Matrix and Accuracy of the SVM Linear model with the highest accuracy (C=0.1).
+
+```{r echo=FALSE}
+# View confusion matrix of out-of-fold predictions
+svm_out_of_fold_preds = svm_linear_model$pred
+svm_conf_matrix = confusionMatrix(svm_out_of_fold_preds$pred, svm_out_of_fold_preds$obs)
+svm_conf_matrix
+```
+
+The following reports the optimal C value reported by the SVM Linear model generation (C=0.1).
+
+```{r echo=FALSE}
+#view the optimal parameters
+svm_linear_model$bestTune
+```
+
+
+
+### Model 5 Support Vector Machine with Polynomial Kernel
+Next, a Support Vector machine with a polynomial kernel model is trained on the training data using 2-fold cross validation.  The model is configured to leverage the following multiple hyperparameters: C, Degree, and Scale.  Building the model with multiple hyperparameters with multiple values is implemented to improve the accuracy of the model based on the optimal combination of hyperparameter values.  
+
+
+The C hyperparameter is a regularization parameter that controls the balance between achieving a low error and minimizing the model complexity.  The following values of the C hyperparameter are used by the model: 0.1, 1, 10.
+
+For polynomial kernel SVMs, degree determines the degree of the polynomial used in the kernel function, affects the complexity of the decision boundary, and controls the dimensionality of the feature space after transformation. A higher degree results in a higher-dimensional space.  The following values of the Degree hyperparameter are used by the model: 2, 3, 4.
+
+A low Degree (e.g., 2): A lower degree polynomial kernel creates simpler decision boundaries. It captures simpler relationships between the features and the target variable. With a degree of 2, the polynomial kernel generates interaction terms and quadratic features. Degree 2: Adds quadratic terms and interactions, making the model capable of capturing more complex relationships than a linear model.  
+
+A high Degree (e.g., 3, 4, or more) creates more complex decision boundaries, captures more intricate relationships and interactions between features, which helps with data that is more complex but also increases the risk of over-fitting. Degree 3 and Above: These degrees add even higher-order terms, which increases the model’s ability to fit intricate patterns in the training data.
+
+The Scale value used is calculated as a ratio of the number of features in the dataset (0.0278).  If scale is a small value, it effectively makes the polynomial transformation more sensitive to variations in input features. This can lead to more complex decision boundaries. For this analysis, the scale property for the polynomial kernel is set as a constant.
+
+The model also is configured to preprocess the training data to remove attributes with 0 variance, and apply centering across all of the samples.  This centers the predictors by subtracting the mean of each predictor from the data, standardizing the data so that the mean of each predictor is zero.
+
+```{r include=FALSE}
+# Define train control for SVM
+# Run with 2-fold cross validation
+# Compute performance metrics for multiclass classification problem
+# save predictions for the final model
+
+train_control_svm_poly = trainControl(
+  method = "cv",
+  number = 2,  # 2-fold cross-validation
+  summaryFunction = multiClassSummary,
+  savePredictions = "final"
+)
+
+# Calculate the number of features in the training data 
+# excluding 1 data to account for the Target column
+num_features = ncol(svm_train) - 1
+
+# Calculate the scale value as 1 / number of features
+scale_value = 1 / num_features
+
+#create a data frame of all possible hyper parameter combinations for tuning the SVM with polynomial kernel.
+tune_grid_svm_poly = expand.grid(C = c(0.1, 1, 10), degree = c(2, 3, 4), scale=scale_value)  # Only tuning C and degree, not scale
+
+
+# Train SVM model with polynomial kernel and preprocessing included directly in the train function
+svm_poly_model = caret::train(
+  Target ~ ., 
+  data = svm_train, 
+  method = "svmPoly",  
+  trControl = train_control_svm_poly,
+  preProcess = c("zv", "center"),  # remove attributes with 0 variance across all samples, apply centering
+  tuneGrid = tune_grid_svm_poly  
+)
+```
+
+
+The following shows the SVM Polynomial model statistics for each combination hyperparameters used to tune the model (C and Degree, only, as Scale was set at a constant value):
+
+```{r echo=FALSE}
+# View model statistics
+print(svm_poly_model)
+```
+
+
+The following plot shows the Accuracy of the SVM Polynomial model against the 3 cost and Degree hyperparameters.
+
+```{r echo=FALSE}
+# Plot model performance
+plot(svm_poly_model)
+```
+
+
+The following reports the Confusion Matrix and Accuracy of the SVM Polynomial model with the highest accuracy (C=1.0, Degree=2).
+
+```{r echo=FALSE}
+# View confusion matrix of out-of-fold predictions
+svm_poly_out_of_fold_preds = svm_poly_model$pred
+svm_conf_matrix = confusionMatrix(svm_poly_out_of_fold_preds$pred, svm_poly_out_of_fold_preds$obs)
+print(svm_conf_matrix)
+```
+
+The following reports the optimal hyperparameters reported by the SVM Polynomial model generation.
+
+```{r echo=FALSE}
+#view the optimal parameters
+svm_poly_model$bestTune
 ```
 
 
