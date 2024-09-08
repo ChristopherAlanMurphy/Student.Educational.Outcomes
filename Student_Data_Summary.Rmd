@@ -1,7 +1,7 @@
 ---
 title: "IST 707 Final Project - Student Educational Outcomes"
 author: "Christoper Murphy, Padmaja Kurumaddali, La Monte Yarroll"
-date: "Septemner 07, 2024"
+date: "September 07, 2024"
 output: word_document
 
 ---
@@ -16,7 +16,7 @@ knitr::opts_chunk$set(echo = TRUE)
 #using function provided by Professor Gary Krudys.
 
 #specify the packages needed
-packages=c("tidyverse", "ggplot2", "mclust", "rpart", "rpart.plot", "caret", "arules", "arulesViz", "corrplot", "Hmisc", "cluster", "knitr")
+packages=c("tidyverse", "ggplot2", "mclust", "rpart", "rpart.plot", "caret", "arules", "arulesViz", "corrplot", "Hmisc", "cluster", "knitr", "factoextra", "randomForest", "e1071", "pheatmap","pROC")
 
 #use this function to check if each package is on the local machine
 #if a package is installed, it will be loaded
@@ -68,6 +68,7 @@ filePath = "studentdata.csv"
 studentSuccessData = read.csv2(filePath, stringsAsFactors = FALSE, dec=".")
 str(studentSuccessData)
 ```
+
 
 
 #### Initial Data Sample
@@ -958,6 +959,421 @@ svm_poly_model$bestTune
 
 
 ## Additional Models
+
+# Dimensionality Reduction
+
+```{r}
+# Perform PCA
+pca <- prcomp(train %>% select(where(is.numeric)), center = TRUE, scale. = TRUE)
+
+# Summary of PCA
+summary(pca)
+
+# Append PCA results to the dataset
+train_pca <- as.data.frame(pca$x)
+train_pca$Target <- train$Target
+
+# Visualize PCA results
+ggplot(train_pca, aes(x = PC1, y = PC2, color = Target)) +
+  geom_point() +
+  labs(title = "PCA of Student Success Data",
+       x = "Principal Component 1",
+       y = "Principal Component 2") +
+  theme_minimal()
+
+
+# Visualize the explained variance
+fviz_eig(pca, addlabels = TRUE, ylim = c(0, 50))
+
+```
+
+
+# PCA on Selected Factors
+
+Based on the Scree plot, it looks like the first few principal components explain a significant portion of the variance. Let’s decide to select the first two principal components for further analysis.
+
+```{r}
+
+# Select the number of principal components based on the Scree plot
+selected_pcs <- 2
+
+# Transform the data using the selected principal components
+train_pca_selected <- as.data.frame(pca$x[, 1:selected_pcs])
+train_pca_selected$Target <- train$Target
+
+# Visualize the explained variance
+fviz_eig(pca, addlabels = TRUE, ylim = c(0, 50))
+
+# Visualize PCA results
+ggplot(train_pca_selected, aes(x = PC1, y = PC2, color = Target)) +
+  geom_point() +
+  labs(title = "PCA of Student Success Data (Selected Components)",
+       x = "Principal Component 1",
+       y = "Principal Component 2") +
+  theme_minimal()
+
+
+```
+
+# MODEL 6 - NAIVE BAYES
+
+# Naive Bayes with k-fold Cross-Validation on Non-PCA Data
+```{r}
+# Set up k-fold cross-validation
+kfolds <- 10
+folds <- createFolds(train$Target, k = kfolds)
+
+AllResults_non_pca <- list()
+AllLabels_non_pca <- list()
+
+for (k in 1:kfolds) {
+  fold_train <- train[folds[[k]], ]
+  fold_test <- train[-folds[[k]], ]
+  
+  # Train Naive Bayes Model
+  naive_bayes_model <- naiveBayes(Target ~ ., data = fold_train)
+  
+  # Predict on Test Data
+  nb_Pred <- predict(naive_bayes_model, newdata = fold_test)
+  
+  #Visualize
+  plot(nb_Pred, ylab= "Density", main = "Naive Bayes Plot")
+  
+  # Ensure predictions and actual labels are factors with the same levels
+  nb_Pred <- factor(nb_Pred, levels = unique(c(levels(nb_Pred), levels(fold_test$Target))))
+  fold_test$Target <- factor(fold_test$Target, levels = unique(c(levels(nb_Pred), levels(fold_test$Target))))
+  
+  # Visualize Naive Bayes Predictions
+  plot <- ggplot(data.frame(Prediction = nb_Pred), aes(x = Prediction)) +
+    geom_density(fill = "blue", alpha = 0.5) +
+    labs(title = paste("Naive Bayes Plot - Fold", k), y = "Density") +
+    theme_minimal()
+  print(plot)
+  
+  # Evaluate Model
+  conf_matrix <- confusionMatrix(nb_Pred, fold_test$Target)
+  print(conf_matrix)
+  
+  # Calculate accuracy
+  accuracy <- sum(diag(conf_matrix$table)) / sum(conf_matrix$table)
+  print(paste("Accuracy: Fold", k, "-", round(accuracy * 100, 2), "%", sep = " "))
+  
+  # Accumulate results from each fold
+  AllResults_non_pca <- c(AllResults_non_pca, nb_Pred)
+  AllLabels_non_pca <- c(AllLabels_non_pca, fold_test$Target)
+}
+
+# Confusion Matrix (across all folds)
+final_conf_matrix_non_pca <- table(unlist(AllResults_non_pca), unlist(AllLabels_non_pca))
+print(final_conf_matrix_non_pca)
+
+# Calculate accuracy from the confusion matrix
+nb_accuracy_non_pca <- sum(diag(final_conf_matrix_non_pca)) / sum(final_conf_matrix_non_pca)
+print(paste("Overall Accuracy (Non-PCA): ", round(nb_accuracy_non_pca * 100, 2), "%", sep = ""))
+
+# Plot Confusion Matrix as Heatmap
+heatmap_data_non_pca <- as.matrix(final_conf_matrix_non_pca)
+pheatmap(heatmap_data_non_pca, main = "Confusion Matrix Heatmap (Non-PCA)", color = colorRampPalette(c("white", "blue"))(50))
+
+# Plotting ROC Curve
+roc_curve_non_pca <- roc(unlist(AllLabels_non_pca), as.numeric(unlist(AllResults_non_pca)))
+ggroc(roc_curve_non_pca) +
+  ggtitle("ROC Curve (Non-PCA)") +
+  xlab("1 - Specificity") +
+  ylab("Sensitivity")
+
+
+
+```
+# Naive Bayes with K folds validation on Selected PCA Data
+```{r}
+# Set up k-fold cross-validation
+folds_pca <- createFolds(train_pca_selected$Target, k = kfolds)
+
+AllResults_pca <- list()
+AllLabels_pca <- list()
+
+for (k in 1:kfolds) {
+  fold_train <- train_pca_selected[folds_pca[[k]], ]
+  fold_test <- train_pca_selected[-folds_pca[[k]], ]
+  
+  # Train Naive Bayes Model
+  naive_bayes_model <- naiveBayes(Target ~ ., data = fold_train)
+  
+  # Predict on Test Data
+  nb_Pred <- predict(naive_bayes_model, newdata = fold_test)
+  
+  #Visualize
+  plot(nb_Pred, ylab= "Density", main = "Naive Bayes Plot")
+  
+  # Ensure predictions and actual labels are factors with the same levels
+  nb_Pred <- factor(nb_Pred, levels = unique(c(levels(nb_Pred), levels(fold_test$Target))))
+  fold_test$Target <- factor(fold_test$Target, levels = unique(c(levels(nb_Pred), levels(fold_test$Target))))
+  
+  # Visualize Naive Bayes Predictions
+  plot <- ggplot(data.frame(Prediction = nb_Pred), aes(x = Prediction)) +
+    geom_density(fill = "blue", alpha = 0.5) +
+    labs(title = paste("Naive Bayes Plot - Fold", k), y = "Density") +
+    theme_minimal()
+  print(plot)
+  
+  
+  # Evaluate Model
+  conf_matrix <- confusionMatrix(nb_Pred, fold_test$Target)
+  print(conf_matrix)
+  
+  # Calculate accuracy
+  accuracy <- sum(diag(conf_matrix$table)) / sum(conf_matrix$table)
+  print(paste("Accuracy: Fold", k, "-", round(accuracy * 100, 2), "%", sep = " "))
+  
+  # Accumulate results from each fold
+  AllResults_pca <- c(AllResults_pca, nb_Pred)
+  AllLabels_pca <- c(AllLabels_pca, fold_test$Target)
+}
+
+# Confusion Matrix (across all folds)
+final_conf_matrix_pca <- table(unlist(AllResults_pca), unlist(AllLabels_pca))
+print(final_conf_matrix_pca)
+
+# Calculate accuracy from the confusion matrix
+nb_accuracy_pca <- sum(diag(final_conf_matrix_pca)) / sum(final_conf_matrix_pca)
+print(paste("Overall Accuracy (PCA): ", round(nb_accuracy_pca * 100, 2), "%", sep = ""))
+
+# Plot Confusion Matrix as Heatmap
+heatmap_data_pca <- as.matrix(final_conf_matrix_pca)
+pheatmap(heatmap_data_pca, main = "Confusion Matrix Heatmap (PCA)", color = colorRampPalette(c("white", "blue"))(50))
+
+# Plotting ROC Curve
+roc_curve_pca <- roc(unlist(AllLabels_pca), as.numeric(unlist(AllResults_pca)))
+ggroc(roc_curve_pca) +
+  ggtitle("ROC Curve (PCA)") +
+  xlab("1 - Specificity") +
+  ylab("Sensitivity")
+
+
+
+```
+# Naive Bayes with K folds on PCA data
+
+```{r}
+# Set up k-fold cross-validation
+folds_pca <- createFolds(train_pca$Target, k = kfolds)
+
+AllResults_pca <- list()
+AllLabels_pca <- list()
+
+for (k in 1:kfolds) {
+  fold_train <- train_pca[folds_pca[[k]], ]
+  fold_test <- train_pca[-folds_pca[[k]], ]
+  
+  # Train Naive Bayes Model
+  naive_bayes_model <- naiveBayes(Target ~ ., data = fold_train)
+  
+  # Predict on Test Data
+  nb_Pred <- predict(naive_bayes_model, newdata = fold_test)
+  
+  #Visualize
+  plot(nb_Pred, ylab= "Density", main = "Naive Bayes Plot")
+  
+  # Ensure predictions and actual labels are factors with the same levels
+  nb_Pred <- factor(nb_Pred, levels = unique(c(levels(nb_Pred), levels(fold_test$Target))))
+  fold_test$Target <- factor(fold_test$Target, levels = unique(c(levels(nb_Pred), levels(fold_test$Target))))
+  
+  # Visualize Naive Bayes Predictions
+  plot <- ggplot(data.frame(Prediction = nb_Pred), aes(x = Prediction)) +
+    geom_density(fill = "blue", alpha = 0.5) +
+    labs(title = paste("Naive Bayes Plot - Fold", k), y = "Density") +
+    theme_minimal()
+  print(plot)
+  
+  # Evaluate Model
+  conf_matrix <- confusionMatrix(nb_Pred, fold_test$Target)
+  print(conf_matrix)
+  
+  # Calculate accuracy
+  accuracy <- sum(diag(conf_matrix$table)) / sum(conf_matrix$table)
+  print(paste("Accuracy: Fold", k, "-", round(accuracy * 100, 2), "%", sep = " "))
+  
+  # Accumulate results from each fold
+  AllResults_pca <- c(AllResults_pca, nb_Pred)
+  AllLabels_pca <- c(AllLabels_pca, fold_test$Target)
+}
+
+# Confusion Matrix (across all folds)
+final_conf_matrix_pca <- table(unlist(AllResults_pca), unlist(AllLabels_pca))
+print(final_conf_matrix_pca)
+
+# Calculate accuracy from the confusion matrix
+nb_accuracy_pca <- sum(diag(final_conf_matrix_pca)) / sum(final_conf_matrix_pca)
+print(paste("Overall Accuracy (PCA): ", round(nb_accuracy_pca * 100, 2), "%", sep = ""))
+
+# Plot Confusion Matrix as Heatmap
+heatmap_data_pca <- as.matrix(final_conf_matrix_pca)
+pheatmap(heatmap_data_pca, main = "Confusion Matrix Heatmap (PCA)", color = colorRampPalette(c("white", "blue"))(50))
+
+# Plotting ROC Curve
+roc_curve_pca <- roc(unlist(AllLabels_pca), as.numeric(unlist(AllResults_pca)))
+ggroc(roc_curve_pca) +
+  ggtitle("ROC Curve (PCA)") +
+  xlab("1 - Specificity") +
+  ylab("Sensitivity")
+
+
+```
+
+
+
+
+# Model 7 - RANDOM FOREST
+# Random Forest with k-fold Cross-Validation on Non-PCA Data
+
+```{r}
+# Set up k-fold cross-validation
+train_control <- trainControl(method = "cv", number = 10)
+
+# Train the model on non-PCA data
+rf_model_non_pca <- train(Target ~ ., data = train, method = "rf", trControl = train_control)
+
+# Predict on the test set
+predictions_non_pca <- predict(rf_model_non_pca, newdata = test)
+
+# Confusion matrix and accuracy for non-PCA data
+conf_matrix_non_pca <- confusionMatrix(predictions_non_pca, test$Target)
+print(conf_matrix_non_pca)
+
+# Calculate and print accuracy for non-PCA data
+rf_accuracy_non_pca <- conf_matrix_non_pca$overall['Accuracy']
+print(paste("Random Forest Accuracy (Non-PCA):", rf_accuracy_non_pca))
+
+
+```
+
+# Random Forest with k-fold Cross-Validation on PCA Data
+
+```{r}
+# Train the model on PCA data
+rf_model_pca <- train(Target ~ ., data = train_pca, method = "rf", trControl = train_control)
+
+# Predict on the test set
+test_pca <- as.data.frame(predict(pca, newdata = test %>% select(where(is.numeric))))
+test_pca$Target <- test$Target
+predictions_pca <- predict(rf_model_pca, newdata = test_pca)
+
+# Confusion matrix and accuracy for PCA data
+conf_matrix_pca <- confusionMatrix(predictions_pca, test$Target)
+print(conf_matrix_pca)
+
+# Calculate and print accuracy for PCA data
+rf_accuracy_pca <- conf_matrix_pca$overall['Accuracy']
+print(paste("Random Forest Accuracy (PCA):", rf_accuracy_pca))
+
+```
+
+
+# Random Forest with K fold Cross Validation on Selected PCA Data
+
+```{r}
+
+# Train the model on selected PCA data
+rf_model_pca_selected <- train(Target ~ ., data = train_pca_selected, method = "rf", trControl = train_control)
+
+# Transform the test data using the same PCA transformation
+test_pca_selected <- as.data.frame(predict(pca, newdata = test %>% select(where(is.numeric)))[, 1:selected_pcs])
+test_pca_selected$Target <- test$Target
+
+# Predict on the test set
+predictions_pca_selected <- predict(rf_model_pca_selected, newdata = test_pca_selected)
+
+# Confusion matrix and accuracy for selected PCA data
+conf_matrix_pca_selected <- confusionMatrix(predictions_pca_selected, test$Target)
+print(conf_matrix_pca_selected)
+
+# Calculate and print accuracy for selected PCA data
+rf_accuracy_pca_selected <- conf_matrix_pca_selected$overall['Accuracy']
+print(paste("Random Forest Accuracy (Selected PCA):", rf_accuracy_pca_selected))
+
+
+
+
+```
+# Random Forest with different number of trees on Non PCA data
+
+```{r}
+
+# Define a grid of different numbers of trees
+tune_grid <- expand.grid(.mtry = c(2, 4, 6, 8, 10))
+
+# Train the model on non-PCA data with different numbers of trees
+rf_model_non_pca <- train(Target ~ ., data = train, method = "rf", trControl = train_control, tuneGrid = tune_grid)
+
+# Predict on the test set
+predictions_non_pca <- predict(rf_model_non_pca, newdata = test)
+
+# Confusion matrix and accuracy for non-PCA data
+conf_matrix_non_pca <- confusionMatrix(predictions_non_pca, test$Target)
+print(conf_matrix_non_pca)
+
+# Calculate and print accuracy for non-PCA data
+rf_accuracy_non_pca <- conf_matrix_non_pca$overall['Accuracy']
+print(paste("Random Forest Accuracy (Non-PCA):", rf_accuracy_non_pca))
+```
+
+# Random Forest with different Numbers of Trees on Selected PCA data
+
+```{r}
+
+# Train the model on selected PCA data with different numbers of trees
+rf_model_pca_selected <- train(Target ~ ., data = train_pca_selected, method = "rf", trControl = train_control, tuneGrid = tune_grid)
+
+# Transform the test data using the same PCA transformation
+test_pca_selected <- as.data.frame(predict(pca, newdata = test %>% select(where(is.numeric)))[, 1:selected_pcs])
+test_pca_selected$Target <- test$Target
+
+# Predict on the test set
+predictions_pca_selected <- predict(rf_model_pca_selected, newdata = test_pca_selected)
+
+# Confusion matrix and accuracy for selected PCA data
+conf_matrix_pca_selected <- confusionMatrix(predictions_pca_selected, test$Target)
+print(conf_matrix_pca_selected)
+
+# Calculate and print accuracy for selected PCA data
+rf_accuracy_pca_selected <- conf_matrix_pca_selected$overall['Accuracy']
+print(paste("Random Forest Accuracy (Selected PCA):", rf_accuracy_pca_selected))
+
+
+```
+# Random Forest with different Numbers of Trees on PCA data
+
+```{r}
+
+# Train the model on selected PCA data with different numbers of trees
+rf_model_pca <- train(Target ~ ., data = train_pca, method = "rf", trControl = train_control, tuneGrid = tune_grid)
+
+# Transform the test data using the same PCA transformation
+test_pca <- as.data.frame(predict(pca, newdata = test %>% select(where(is.numeric)))[, 1:selected_pcs])
+test_pca$Target <- test$Target
+
+# Predict on the test set
+predictions_pca <- predict(rf_model_pca, newdata = test_pca)
+
+# Confusion matrix and accuracy for selected PCA data
+conf_matrix_pca <- confusionMatrix(predictions_pca, test$Target)
+print(conf_matrix_pca)
+
+# Calculate and print accuracy for selected PCA data
+rf_accuracy_pca <- conf_matrix_pca$overall['Accuracy']
+print(paste("Random Forest Accuracy (PCA):", rf_accuracy_pca))
+```
+
+
+\pagebreak
+# Conclusions
+
+
+
+\pagebreak
+# Limitations of the Analysis and/or Available Data
+
 
 \pagebreak
 # Conclusions
