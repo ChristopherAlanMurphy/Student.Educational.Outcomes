@@ -629,6 +629,29 @@ ggplot(train, aes(x = factor(Previous.qualification), fill = factor(Target))) +
 \pagebreak
 ## Models
 
+### O Models: Random and Majority
+
+The models calculated later all need to outperform the most naive models, random guessing, and guess the most popular.
+
+
+#### 0 Model: Random Guessing
+
+```{r}
+set.seed(1701)
+randomGuessPrediction <- sample(train$Target, nrow(test), replace=FALSE)
+confusionMatrix(randomGuessPrediction, test.target)
+```
+Random guessing from a distribution that matches the training data gives an accuracy of about 38%. No model should underperform random guessing.
+
+#### 0 Model: Majority
+
+```{r}
+graduate <- test.target[test.target == "Graduate"][1]
+majorityModelPrediction <- rep(graduate, nrow(test))
+confusionMatrix(majorityModelPrediction, test.target)
+```
+Picking the most common value for every test record, yields an accuracy of 52%. Later models should beat 52% accuracy to be interesting.
+
 ### Model 1 Association Rule Mining
 
 
