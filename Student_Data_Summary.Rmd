@@ -1,7 +1,7 @@
 ---
 title: "IST 707 Final Project - Student Educational Outcomes"
 author: "Christoper Murphy, Padmaja Kurumaddali, La Monte Yarroll"
-date: "September 07, 2024"
+date: "Septemner 07, 2024"
 output: word_document
 
 ---
@@ -16,7 +16,7 @@ knitr::opts_chunk$set(echo = TRUE)
 #using function provided by Professor Gary Krudys.
 
 #specify the packages needed
-packages=c("tidyverse", "ggplot2", "mclust", "rpart", "rpart.plot", "caret", "arules", "arulesViz", "corrplot", "Hmisc", "cluster", "knitr", "factoextra", "randomForest", "e1071", "pheatmap","pROC")
+packages=c("tidyverse", "ggplot2", "mclust", "rpart", "rpart.plot", "caret", "arules", "arulesViz", "corrplot", "Hmisc", "cluster", "knitr", "factoextra", "randomForest", "e1071", "pheatmap","pROC","reshape2")
 
 #use this function to check if each package is on the local machine
 #if a package is installed, it will be loaded
@@ -68,7 +68,6 @@ filePath = "studentdata.csv"
 studentSuccessData = read.csv2(filePath, stringsAsFactors = FALSE, dec=".")
 str(studentSuccessData)
 ```
-
 
 
 #### Initial Data Sample
@@ -960,6 +959,7 @@ svm_poly_model$bestTune
 
 ## Additional Models
 
+
 # Dimensionality Reduction
 
 ```{r}
@@ -1363,16 +1363,181 @@ print(conf_matrix_pca)
 # Calculate and print accuracy for selected PCA data
 rf_accuracy_pca <- conf_matrix_pca$overall['Accuracy']
 print(paste("Random Forest Accuracy (PCA):", rf_accuracy_pca))
+
+
 ```
 
 
-\pagebreak
-# Conclusions
+# KNN on Non PCA data
+```{r}
+
+# Set seed for reproducibility
+set.seed(123)
+
+# Define number of folds
+kfolds <- 10
+
+# Create folds
+folds <- createFolds(train$Target, k = kfolds)
+
+# Initialize lists to store results
+AllResults_knn <- list()
+AllLabels_knn <- list()
+
+# Train control for caret
+train_control <- trainControl(method = "cv", number = kfolds)
+
+for (k in 1:kfolds) {
+  # Split data into training and testing sets
+  fold_train <- train[folds[[k]], ]
+  fold_test <- train[-folds[[k]], ]
+  
+  # Train k-NN Model using caret
+  knn_model <- train(Target ~ ., data = fold_train, method = "knn", trControl = train_control)
+  
+  # Make predictions
+  knn_predictions <- predict(knn_model, fold_test)
+  
+  # Ensure predictions and actual labels are factors with the same levels
+  knn_predictions <- factor(knn_predictions, levels = unique(c(levels(knn_predictions), levels(fold_test$Target))))
+  fold_test$Target <- factor(fold_test$Target, levels = unique(c(levels(knn_predictions), levels(fold_test$Target))))
+  
+  # Visualize k-NN Predictions
+  plot <- ggplot(data.frame(Prediction = knn_predictions), aes(x = Prediction)) +
+    geom_density(fill = "green", alpha = 0.5) +
+    labs(title = paste("k-NN Plot - Fold", k), y = "Density") +
+    theme_minimal()
+  print(plot)
+  
+  # Evaluate Model
+  conf_matrix <- confusionMatrix(knn_predictions, fold_test$Target)
+  print(conf_matrix)
+  
+  # Calculate accuracy
+  accuracy <- sum(diag(conf_matrix$table)) / sum(conf_matrix$table)
+  print(paste("Accuracy: Fold", k, "-", round(accuracy * 100, 2), "%", sep = " "))
+  
+  # Accumulate results from each fold
+  AllResults_knn <- c(AllResults_knn, knn_predictions)
+  AllLabels_knn <- c(AllLabels_knn, fold_test$Target)
+}
+
+# Calculate overall accuracy
+overall_accuracy <- confusionMatrix(factor(unlist(AllResults_knn)), factor(unlist(AllLabels_knn)))$overall['Accuracy']
+print(paste("Overall k-NN Accuracy:", overall_accuracy))
+
+# Create the final confusion matrix
+final_conf_matrix_knn <- confusionMatrix(factor(unlist(AllResults_knn)), factor(unlist(AllLabels_knn)))
+
+# Plot Confusion Matrix as Heatmap
+heatmap_data_knn <- as.matrix(final_conf_matrix_knn$table)
+pheatmap(heatmap_data_knn, main = "Confusion Matrix Heatmap (k-NN)", color = colorRampPalette(c("white", "green"))(50))
+
+# Convert the matrix to a format suitable for ggplot
+melted_heatmap_data <- melt(heatmap_data_knn)
 
 
 
-\pagebreak
-# Limitations of the Analysis and/or Available Data
+# Plotting ROC Curve
+roc_curve_knn <- roc(unlist(AllLabels_knn), as.numeric(unlist(AllResults_knn)))
+ggroc(roc_curve_knn) +
+  ggtitle("ROC Curve (k-NN)") +
+  xlab("1 - Specificity") +
+  ylab("Sensitivity")
+
+
+```
+
+# KNN on PCA data
+
+```{r}
+
+# Set seed for reproducibility
+set.seed(123)
+
+# Define number of folds
+kfolds <- 10
+
+# Create folds
+folds <- createFolds(train_pca$Target, k = kfolds)
+
+# Initialize lists to store results
+AllResults_knn <- list()
+AllLabels_knn <- list()
+
+# Train control for caret
+train_control <- trainControl(method = "cv", number = kfolds)
+
+for (k in 1:kfolds) {
+  # Split data into training and testing sets
+  fold_train_pca <- train_pca[folds[[k]], ]
+  fold_test_pca <- train_pca[-folds[[k]], ]
+  
+  # Train k-NN Model using caret
+  knn_model_pca <- train(Target ~ ., data = fold_train_pca, method = "knn", trControl = train_control)
+  
+  # Make predictions
+  knn_predictions_pca <- predict(knn_model_pca, fold_test_pca)
+  
+  # Ensure predictions and actual labels are factors with the same levels
+  knn_predictions_pca <- factor(knn_predictions_pca, levels = unique(c(levels(knn_predictions_pca), levels(fold_test_pca$Target))))
+  fold_test_pca$Target <- factor(fold_test_pca$Target, levels = unique(c(levels(knn_predictions_pca), levels(fold_test_pca$Target))))
+  
+  # Visualize k-NN Predictions
+  plot <- ggplot(data.frame(Prediction = knn_predictions_pca), aes(x = Prediction)) +
+    geom_density(fill = "green", alpha = 0.5) +
+    labs(title = paste("k-NN Plot - Fold", k), y = "Density") +
+    theme_minimal()
+  print(plot)
+  
+  # Evaluate Model
+  conf_matrix_pca <- confusionMatrix(knn_predictions_pca, fold_test_pca$Target)
+  print(conf_matrix_pca)
+  
+  # Calculate accuracy
+  accuracy <- sum(diag(conf_matrix_pca$table)) / sum(conf_matrix_pca$table)
+  print(paste("Accuracy: Fold", k, "-", round(accuracy * 100, 2), "%", sep = " "))
+  
+  # Accumulate results from each fold
+  AllResults_knn_pca <- c(AllResults_knn, knn_predictions_pca)
+  AllLabels_knn_pca <- c(AllLabels_knn, fold_test_pca$Target)
+}
+
+# Calculate overall accuracy
+overall_accuracy <- confusionMatrix(factor(unlist(AllResults_knn_pca)), factor(unlist(AllLabels_knn_pca)))$overall['Accuracy']
+print(paste("Overall k-NN Accuracy:", overall_accuracy))
+
+# Create the final confusion matrix
+final_conf_matrix_knn_pca <- confusionMatrix(factor(unlist(AllResults_knn_pca)), factor(unlist(AllLabels_knn_pca)))
+
+# Plot Confusion Matrix as Heatmap
+heatmap_data_knn_pca <- as.matrix(final_conf_matrix_knn_pca$table)
+pheatmap(heatmap_data_knn_pca, main = "Confusion Matrix Heatmap (k-NN) PCA", color = colorRampPalette(c("white", "green"))(50))
+
+# Convert the matrix to a format suitable for ggplot
+melted_heatmap_data_pca <- melt(heatmap_data_knn_pca)
+
+
+
+# Plotting ROC Curve
+roc_curve_knn_pca <- roc(unlist(AllLabels_knn_pca), as.numeric(unlist(AllResults_knn_pca)))
+ggroc(roc_curve_knn_pca) +
+  ggtitle("ROC Curve (k-NN)") +
+  xlab("1 - Specificity") +
+  ylab("Sensitivity")
+
+
+
+
+
+
+
+
+
+
+
+```
+
 
 
 \pagebreak
