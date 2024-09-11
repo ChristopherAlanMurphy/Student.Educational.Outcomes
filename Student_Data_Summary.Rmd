@@ -16,7 +16,7 @@ knitr::opts_chunk$set(echo = TRUE)
 #using function provided by Professor Gary Krudys.
 
 #specify the packages needed
-packages=c("tidyverse", "ggplot2", "mclust", "rpart", "rpart.plot", "caret", "arules", "arulesViz", "corrplot", "Hmisc", "cluster", "knitr", "factoextra", "randomForest", "e1071", "pheatmap","pROC","reshape2")
+packages=c("tidyverse", "ggplot2", "mclust", "rpart", "rpart.plot", "caret", "arules", "arulesViz", "corrplot", "Hmisc", "cluster", "knitr", "factoextra", "randomForest", "e1071", "pheatmap","pROC","reshape2","stats","nnet")
 
 #use this function to check if each package is on the local machine
 #if a package is installed, it will be loaded
@@ -478,6 +478,9 @@ set.seed(711)
 ind <- sample(c(TRUE, FALSE), size=nrow(studentSuccessData), replace=TRUE, prob=c(0.7, 0.3))
 train <- studentSuccessData[ind, ]
 test <- studentSuccessData[!ind, ]
+
+# Capture the values as reference to compare in confusion matrices.
+test.target <- test$Target
 ```
 
 
@@ -628,6 +631,29 @@ ggplot(train, aes(x = factor(Previous.qualification), fill = factor(Target))) +
 
 \pagebreak
 ## Models
+
+### O Models: Random and Majority
+
+The models calculated later all need to outperform the most naive models, random guessing, and guess the most popular.
+
+
+#### 0 Model: Random Guessing
+
+```{r}
+set.seed(1701)
+randomGuessPrediction <- sample(train$Target, nrow(test), replace=FALSE)
+confusionMatrix(randomGuessPrediction, test$Target)
+```
+Random guessing from a distribution that matches the training data gives an accuracy of about 38%. No model should underperform random guessing.
+
+#### 0 Model: Majority
+
+```{r}
+graduate <- test$Target[test$Target == "Graduate"][1]
+majorityModelPrediction <- rep(graduate, nrow(test))
+confusionMatrix(majorityModelPrediction, test$Target)
+```
+Picking the most common value for every test record, yields an accuracy of 52%. Later models should beat 52% accuracy to be interesting.
 
 ### Model 1 Association Rule Mining
 
@@ -785,10 +811,6 @@ rpart.plot(pruned_tree,
 ```
 
 ```{r}
-#capture the values as reference to compare in the confusion matrix
-test.target <- test$Target
-
-
 #drop the orginal target value
 test %>% select(-Target)
 
@@ -1363,7 +1385,9 @@ rf_model_pca <- train(Target ~ ., data = train_pca, method = "rf", trControl = t
 # Transform the test data using the same PCA transformation
 test_pca <- as.data.frame(predict(pca, newdata = test %>% select(where(is.numeric)))[, 1:selected_pcs])
 test_pca$Target <- test$Target
+```
 
+```{r}
 # Predict on the test set
 predictions_pca <- predict(rf_model_pca, newdata = test_pca)
 
@@ -1536,20 +1560,242 @@ ggroc(roc_curve_knn_pca) +
   ggtitle("ROC Curve (k-NN)") +
   xlab("1 - Specificity") +
   ylab("Sensitivity")
+```
+
+# Model: Multinomial Logistic Regression - All Attributes
+
+Given the outcome variable is a factor with three levels, a multinomial logistic regression model is built using the nnet package to fit the "Target" attribute.  The nnet::multinom() function converts factors to indicator variables internally, avoiding the need to convert factor type attributes to dummy variables before running the model.  In addition, the nnet::multinom() function does not require removing the outcome variable from the test data.
+
+
+The first multinomial logistic regression model is run on all the data to fit for the outcome "Target" attribute.  
+
+For reference, the values of the Target attributed are ordered as follows:
+
+```{r echo=FALSE}
+levels(studentSuccessData$Target)
+```
+
+The model is created using the nnet::multinom() function and used to generate predictions using the test data.
+
+```{r include=FALSE}
+#set seed
+set.seed(711)
+
+# Fit a logistic regression model using all attributes
+multinom_model_Target_All_Data <- nnet::multinom(Target ~ ., data = train)
+
+# Summarize the model
+# output a table of coefficients
+summary(multinom_model_Target_All_Data)
+```
+
+```{r include=FALSE}
+# Predict class probabilities
+predicted_probs_log_reg_1 <- stats::predict(multinom_model_Target_All_Data, newdata = test, type = "probs")
+
+# Convert probabilities to predicted classes
+predicted_classes_log_reg_1 <- colnames(predicted_probs_log_reg_1)[apply(predicted_probs_log_reg_1, 1, which.max)]
+```
+
+The confusion matrix generated from the model:
+
+```{r echo=FALSE}
+# Confusion matrix
+# Compare predicted classes to the actual Target values in the test Data
+conf_matrix_log_reg_1 <- confusionMatrix(factor(predicted_classes_log_reg_1, levels = levels(test$Target)), test$Target)
+print(conf_matrix_log_reg_1)
+```
+
+The accuracy generated from the model:
+
+```{r echo=FALSE}
+# Accuracy
+accuracy <- sum(predicted_classes_log_reg_1 == test$Target) / nrow(test)
+print(paste("Accuracy:", round(accuracy, 2)))
+```
+
+# Model: Multinomial Logistic Regression - Significant Attributes
+
+The second multinomial logistic regression model is built to fit the outcome "Target" attribute using predictor attributes present in strong and significant rules found during association rule mining above.
+
+The model is created using the nnet::multinom() function and used to generate predictions using the test data.
+
+```{r include=FALSE}
+#set seed
+set.seed(711)
+
+
+# Fit a logistic regression model using statistically significant attributes
+multinom_model_Target_focused <- nnet::multinom(Target ~ Previous.qualification + Age.at.enrollment + Application.mode + 
+                                             Father.s.qualification + Curricular.units.2nd.sem..grade. + 
+                                             Tuition.fees.up.to.date + Mother.s.qualification + 
+                                             Mother.s.occupation + Displaced, data = train)
+
+# Summarize the model
+# output a table of coefficients
+summary(multinom_model_Target_focused)
+```
 
 
 
-
-
-
-
-
-
-
+```{r include=FALSE}
+#first, prepare the test data subset of the same length as predicted classes
+test_multinom_focused <- test %>% dplyr::select(Target, Previous.qualification, Age.at.enrollment, Application.mode, 
+                                             Father.s.qualification, Curricular.units.2nd.sem..grade.,  
+                                             Tuition.fees.up.to.date, Mother.s.qualification, 
+                                             Mother.s.occupation, Displaced)
 
 ```
 
 
+
+```{r include=FALSE}
+# Make predictions
+predicted_probs_log_reg_2 <- stats::predict(multinom_model_Target_focused, newdata = test_multinom_focused, type = "probs")
+predicted_classes_log_reg_2 <- colnames(predicted_probs_log_reg_2)[apply(predicted_probs_log_reg_2, 1, which.max)]
+```
+
+
+The confusion matrix generated from the model:
+
+```{r echo=FALSE}
+# Combine predictions with actual outcomes
+results <- data.frame(
+  actual = test$Target,
+  predicted = factor(predicted_classes_log_reg_2, levels = levels(test$Target))
+)
+
+# Confusion matrix
+conf_matrix_log_reg_2 <- caret::confusionMatrix(results$predicted, results$actual)
+conf_matrix_log_reg_2
+```
+
+
+The accuracy generated from the model:
+
+```{r echo=FALSE}
+# Calculate and print the accuracy
+accuracy <- conf_matrix_log_reg_2$overall['Accuracy']
+print(paste("Accuracy:", round(accuracy * 100, 2), "%"))
+```
+
+
+# Model: Binary Logistic Regression - all attributes
+
+To run a binary logistic regression, additional data transformation is required.  First, a copy of the dataset is created.  A new binary outcome variable titled "Dropout" is added to the dataset to represent contain the value 1 if Target=Dropout.  This attribute will contain a value of 0 when the Target attribute contains "Graduate" or "Enrolled".  In addition, the Target attribute is removed.
+
+```{r include=FALSE}
+studentSuccessData_regrssion <- studentSuccessData
+
+# Remove rows with any NA values
+studentSuccessData_regrssion <- studentSuccessData_regrssion[complete.cases(studentSuccessData_regrssion), ]
+```
+
+
+```{r include=FALSE}
+#1.) add a column to hold Dropout, default to 0
+studentSuccessData_regression <- studentSuccessData %>% mutate(Dropout=0)
+    
+#2.) find indexes of the dropout records
+dropoutIndexList <- which(studentSuccessData_regression$Target=="Dropout")
+    
+#3.) populate Dropout column = 1 at the indices
+studentSuccessData_regression$Dropout[dropoutIndexList] <- 1
+
+studentSuccessData_regression$Dropout <- as.factor(studentSuccessData_regression$Dropout)
+
+studentSuccessData_regression <- studentSuccessData_regression %>% dplyr::select(-Target)
+
+```
+
+Next, train and test data is created with a 70/30 split, respectively.
+
+```{r include=FALSE}
+set.seed(711)
+  
+ind <- sample(c(TRUE, FALSE), size=nrow(studentSuccessData_regression), replace=TRUE, prob=c(0.7, 0.3))
+
+train_regression <- studentSuccessData_regression[ind, ]
+test_regression <- studentSuccessData_regression[!ind, ]
+```
+
+
+After data preparation, a binary logistic regression model is created to specifically fit for the outcome attribute "Dropout".  The outcome shows coefficient estimates for predictor variables.  Coefficients having a p-value < 0.05 are statistically significant in the model. 
+
+```{r include=FALSE}
+#set seed
+set.seed(711)
+
+# Fit the logistic regression model
+glm_model_Dropout_All_Data <- stats::glm(Dropout ~ ., family=binomial, data = train_regression)
+
+# Summarize the model
+summary(glm_model_Dropout_All_Data)
+
+```
+
+The model did not successfully converge to a solution for the generalized linear model (GLM). The model created aliased coefficients indicating that some predictors are colinear with other predictors, or there are redundant predictors in the model leading to singularities.  To address this, an additional and simplified binomial logistic regression model is needed.  The next section builds and tests the simplified model.
+
+
+# Model: Binary Logistic Regression - significant attributes
+
+The second mbinomial logistic regression mode is built to fit the outcome "Dropout" attribute using predictor attributes present in strong and significant rules found during association rule mining above.
+
+The binary logistic regression model is Fit to predict Dropout using focused set of attributes.  The following shows the summary of the model:
+
+```{r echo=FALSE}
+#set seed
+set.seed(711)
+
+# Fit the logistic regression model
+glm_model_Dropout_Focused <- stats::glm(Dropout ~ Previous.qualification + Age.at.enrollment + Application.mode + 
+                                             Father.s.qualification + Curricular.units.2nd.sem..grade. + 
+                                             Tuition.fees.up.to.date + Mother.s.qualification + 
+                                             Mother.s.occupation + Displaced, family=binomial, data = train_regression)
+
+# Summarize the model
+summary(glm_model_Dropout_Focused)
+
+``` 
+
+
+Next, predictions are run using the model and the test data.
+
+```{r echo=FALSE}
+# Generate predicted probabilities
+predicted_probs_log_reg_4 <- stats::predict(glm_model_Dropout_Focused, newdata = test_regression, type = "response")
+
+# Convert probabilities to class predictions
+predicted_classes_log_reg_4 <- ifelse(predicted_probs_log_reg_4 > 0.5, "1", "0")
+
+```
+
+
+The confusion matrix for the model:
+
+```{r}
+# Combine predictions with actual outcomes
+results <- data.frame(
+  actual = test_regression$Dropout,
+  predicted = factor(predicted_classes_log_reg_4, levels = levels(test_regression$Dropout))
+)
+
+
+# Generate the confusion matrix
+confusion_matrix_log_reg_4 <- confusionMatrix(results$predicted, results$actual)
+
+# Print the confusion matrix
+print(confusion_matrix_log_reg_4)
+
+```
+
+The accuracy generated from the model:
+
+```{r}
+# Print the accuracy
+accuracy <- confusion_matrix_log_reg_4$overall['Accuracy']
+print(paste("Accuracy:", round(accuracy * 100, 2), "%"))
+```
 
 \pagebreak
 # Conclusions
@@ -1566,4 +1812,3 @@ ggroc(roc_curve_knn_pca) +
 # Bibliography
 
 Realinho,Valentim, Vieira Martins,Mónica, Machado,Jorge, and Baptista,Luís. (2021). Predict Students' Dropout and Academic Success. UCI Machine Learning Repository. https://doi.org/10.24432/C5MC89.
-
