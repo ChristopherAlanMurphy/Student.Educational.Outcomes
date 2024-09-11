@@ -478,6 +478,9 @@ set.seed(711)
 ind <- sample(c(TRUE, FALSE), size=nrow(studentSuccessData), replace=TRUE, prob=c(0.7, 0.3))
 train <- studentSuccessData[ind, ]
 test <- studentSuccessData[!ind, ]
+
+# Capture the values as reference to compare in confusion matrices.
+test.target <- test$Target
 ```
 
 
@@ -808,10 +811,6 @@ rpart.plot(pruned_tree,
 ```
 
 ```{r}
-#capture the values as reference to compare in the confusion matrix
-test.target <- test$Target
-
-
 #drop the orginal target value
 test %>% select(-Target)
 
@@ -1375,7 +1374,9 @@ rf_model_pca <- train(Target ~ ., data = train_pca, method = "rf", trControl = t
 # Transform the test data using the same PCA transformation
 test_pca <- as.data.frame(predict(pca, newdata = test %>% select(where(is.numeric)))[, 1:selected_pcs])
 test_pca$Target <- test$Target
+```
 
+```{r}
 # Predict on the test set
 predictions_pca <- predict(rf_model_pca, newdata = test_pca)
 
