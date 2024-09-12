@@ -1,7 +1,7 @@
 ---
 title: "IST 707 Final Project - Student Educational Outcomes"
 author: "Christoper Murphy, Padmaja Kurumaddali, La Monte Yarroll"
-date: "September 07, 2024"
+date: "Septemner 07, 2024"
 output: word_document
 
 ---
