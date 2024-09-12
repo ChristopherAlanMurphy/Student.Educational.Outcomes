@@ -1873,7 +1873,7 @@ print(paste("Accuracy:", round(accuracy * 100, 2), "%"))
 
 ## Results Summary Table
 ```{r echo=FALSE}
-modelname <- c("Random Guess", 
+model <- c("Random Guess", 
                "Most Common Value", 
                "K-means", 
                "Decision Tree", 
@@ -1895,7 +1895,7 @@ modelname <- c("Random Guess",
                "Biinomial Logistic Regression - All Attributes",
                "Biinomial Logistic Regression - Select Attributes")
 
-modeltype <- c("Base", 
+type <- c("Base", 
                "Base", 
                "Clustering", 
                "Classification", 
@@ -1917,9 +1917,9 @@ modeltype <- c("Base",
                "Logistic Regression",
                "Logistic Regression")
 
-modelaccuracy <- c("37.73",
+accuracy <- c("37.73",
                    "51.84",
-                   "0.0",
+                   "NaN",
                    "73.82",
                    "76.24",
                    "75.33",
@@ -1936,10 +1936,10 @@ modelaccuracy <- c("37.73",
                    "65.84",
                    "77.64",
                    "69.62",
-                   "0.0",
+                   "NaN",
                    "85.22")
 
-accuracyrank <- c(19,18,20,8,6,7,16,14,15,3,5,10,4,12,11,17,13,2,9,21,1)
+rank <- c(19,18,20,8,6,7,16,14,15,3,5,10,4,12,11,17,13,2,9,21,1)
 
 comments <- c("",
                    "",
@@ -1963,14 +1963,15 @@ comments <- c("",
                    "",
                    "")
 
-modelResultsSummary <- data.frame(accuracyrank,modelname,modelaccuracy,modeltype,comments)
+modelResultsSummary <- data.frame(rank,model,accuracy,type)
 
 #sort the importance dataframe by the calculated importance 
-modelResultsSummary <- modelResultsSummary %>% arrange(accuracyrank)
+modelResultsSummary <- modelResultsSummary %>% arrange(rank)
 
-modelResultsSummary
+kable(modelResultsSummary)
 ```
 
+\pagebreak
 ## Association Rule Mining
 ## Clusting Models
 ## Classification Models
