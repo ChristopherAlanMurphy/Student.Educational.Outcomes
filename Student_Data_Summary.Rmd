@@ -1870,7 +1870,106 @@ print(paste("Accuracy:", round(accuracy * 100, 2), "%"))
 ```
 \pagebreak
 # Results
-## Summary
+
+## Results Summary Table
+```{r echo=FALSE}
+modelname <- c("Random Guess", 
+               "Most Common Value", 
+               "K-means", 
+               "Decision Tree", 
+               "Support Vector Machine - Linear", 
+               "Support Vector Machine - Polynomial",
+               "Naive Bayes, K-Fold, Non-PCA", 
+               "Naive Bayes, K-Fold, Selected-PCA", 
+               "Naive Bayes, K-Fold, PCA", 
+               "Random Forest, K-Fold, Non-PCA", 
+               "Random Forest, K-Fold, PCA", 
+               "Random Forest, K-Fold, Selected PCA",
+               "Random Forest, Variable Tree Numbers, Non-PCA",
+               "Random Forest, Variable Tree Numbers, Selected PCA",
+               "Random Forest, Variable Tree Numbers, PCA",
+               "KNN, non-PCA",
+               "KNN PCA",
+               "Multinomial Logistic Regression - All Attributes",
+               "Multinomial Logistic Regression - Select Attributes",
+               "Biinomial Logistic Regression - All Attributes",
+               "Biinomial Logistic Regression - Select Attributes")
+
+modeltype <- c("Base", 
+               "Base", 
+               "Clustering", 
+               "Classification", 
+               "Classification", 
+               "Classification",
+               "Classification", 
+               "Classification", 
+               "Classification", 
+               "Ensemble",
+               "Ensemble",
+               "Ensemble",
+               "Ensemble",
+               "Ensemble",
+               "Ensemble",
+               "Lazy Learning", 
+               "Lazy Learning",
+               "Logistic Regression",
+               "Logistic Regression",
+               "Logistic Regression",
+               "Logistic Regression")
+
+modelaccuracy <- c("37.73",
+                   "51.84",
+                   "0.0",
+                   "73.82",
+                   "76.24",
+                   "75.33",
+                   "60.39",
+                   "65.48",
+                   "64.66",
+                   "77.49",
+                   "76.44",
+                   "66.62",
+                   "76.74",
+                   "66.47",
+                   "66.54",
+                   "59.15",
+                   "65.84",
+                   "77.64",
+                   "69.62",
+                   "0.0",
+                   "85.22")
+
+accuracyrank <- c(19,18,20,8,6,7,16,14,15,3,5,10,4,12,11,17,13,2,9,21,1)
+
+comments <- c("",
+                   "",
+                   "",
+                   "",
+                   "",
+                   "",
+                   "Average of 10 folds.",
+                   "Average of 10 folds.",
+                   "Average of 10 folds.",
+                   "",
+                   "",
+                   "",
+                   "",
+                   "",
+                   "",
+                   "Average of 10 folds.",
+                   "Average of 10 folds.",
+                   "",
+                   "",
+                   "",
+                   "")
+
+modelResultsSummary <- data.frame(accuracyrank,modelname,modelaccuracy,modeltype,comments)
+
+#sort the importance dataframe by the calculated importance 
+modelResultsSummary <- modelResultsSummary %>% arrange(accuracyrank)
+
+modelResultsSummary
+```
 
 ## Association Rule Mining
 ## Clusting Models
