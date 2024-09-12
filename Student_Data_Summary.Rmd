@@ -60,37 +60,27 @@ https://archive.ics.uci.edu/dataset/697/predict+students+dropout+and+academic+su
 This dataset contains information on students' marital status, application details, previous qualifications, family background, admission grades, financial status, and academic performance. The target variable indicates whether a student dropped out or achieved academic success. The data spans multiple semesters and includes economic indicators such as unemployment rate, inflation rate, and GDP. Researchers can leverage this dataset to develop models for predicting dropout and academic success, contributing to the understanding of factors influencing educational outcomes.
 
 
-### Data Retrieval
-Data structure structure when read in from the .CSV file:
+#### Data Retrieval
+The data is read in from the .CSV file.
 
-```{r echo=FALSE}
+```{r cache=TRUE, include=FALSE, label='get-data'}
 filePath = "studentdata.csv"
 studentSuccessData = read.csv2(filePath, stringsAsFactors = FALSE, dec=".")
 str(studentSuccessData)
 ```
 
 
-#### Initial Data Sample
-A sample set of records:
-```{r echo=FALSE}
+```{r cache=TRUE, include=FALSE, label='view-data-head'}
 head(studentSuccessData, 5)
 ```
 
-#### Check for Missing Values
 
-```{r echo=FALSE}
-colSums(is.na(studentSuccessData))
-```
-
-
-
-\pagebreak
-### Data Attribute Summary
+#### Data Attribute Summary
 
 The Kaggle data card can also be found on the following page
 https://www.kaggle.com/code/mdismielhossenabir/student-s-dropout-and-academic-success/input
 
-### Attribute Summary:
+#### Attribute Descriptions:
 * Marital Status: The marital status of the student
 * Application mode: The mode through which the student applied for admission
 * Application order: The order in which the student applied for admission.
@@ -133,11 +123,18 @@ https://www.kaggle.com/code/mdismielhossenabir/student-s-dropout-and-academic-su
 
 \pagebreak
 
-### Data Transformations
+## Data Transformations
 
-First, fill missing values with the mean for numeric columns and mode for categorical columns.
+First, missing values are filled in with the mean for numeric columns, and mode for categorical columns.  Second, categorical columns are converted to type Factor. 
 
-```{r include=FALSE}
+The structure of the data frame after transformation:
+
+```{r cache=TRUE, include=FALSE, label='view-data-colsums'}
+colSums(is.na(studentSuccessData))
+```
+
+
+```{r cache=TRUE, include=FALSE, label='remove-missing-data'}
 # Perform necessary transformations
 
 # Fill missing values with the mean for numeric columns and mode for categorical columns
@@ -160,9 +157,8 @@ Mode <- function(x) {
 ```
 
 
-Second, convert categorical columns to type Factor.
 
-```{r include=FALSE}
+```{r cache=TRUE, include=FALSE, label='convert-attributes-to-factors'}
 
 # Convert categorical columns to factor type
 
@@ -436,25 +432,14 @@ studentSuccessData <- studentSuccessData %>%
 ```
 
 
-Show the structure of the data frame after transformation:
-
-```{r}
+```{r echo=FALSE, cache=TRUE, label='view-data-str'}
 #validate structure after attribute transformation
 str(studentSuccessData)
 ```
 
 
 
-Show the summary of the data frame after transformation:
-
-```{r}
-summary(studentSuccessData)
-```
-
-
-Finally, remove any incomplete observations from the data frame.
-
-```{r include=FALSE}
+```{r cache=TRUE, include=FALSE, label='remove-complete-cases'}
 
 # Remove rows with any NA values
 studentSuccessData <- studentSuccessData[complete.cases(studentSuccessData), ]
@@ -462,18 +447,20 @@ studentSuccessData <- studentSuccessData[complete.cases(studentSuccessData), ]
 ```
 
 
-#### Continuous Attributes
+The following summarizes the data after transformation:
 
-These attributes are continuous variables:
-["Unemployment.rate", "Inflation.rate", "GDP"]                            
+```{r echo=FALSE, cache=TRUE, label='view-data-summary'}
+summary(studentSuccessData)
+```
+
 
 
 \pagebreak
-### Exploratory Data Analysis
+## Exploratory Data Analysis
 
-Divide the data into a reserved test set (30%) and a train set (70%).
+To aid in training and testing prediction models, the data is divided into a reserved test data set (30% of the data) and a train data set (70% of the data).  A copy of the test and train datasets are created to support support vector machine training and testing.
 
-```{r include=FALSE}
+```{r include=FALSE, label='create-test-train', cache=TRUE}
 set.seed(711)
 ind <- sample(c(TRUE, FALSE), size=nrow(studentSuccessData), replace=TRUE, prob=c(0.7, 0.3))
 train <- studentSuccessData[ind, ]
@@ -484,9 +471,7 @@ test.target <- test$Target
 ```
 
 
-Copy the test and train datasets to create an SVM-specific test and train data sets.
-
-```{r include=FALSE}
+```{r cache=TRUE, include=FALSE, label='create-test-train-svm'}
 #capture new data frames to isolate to SVM
 svm_train <- train
 svm_test <- test
@@ -498,9 +483,9 @@ svm_test <- svm_test[,-1]
 ```
 
 
-The following plots describe the attribute distributions.
+The following plots describe the distributions of the attributes of the dataset.
 
-```{r}
+```{r echo=FALSE, label='plot-all-attributes', cache=TRUE}
  
 columns <- colnames(train)
 # Loop through each column and create a plot
@@ -525,17 +510,21 @@ for (col in columns) {
 ```
 
 
-the following graph shows an example of a small multiple from the dataset.
-
-```{r}
+```{r eval=FALSE, include=FALSE, label='plot-small-multiple', cache=TRUE}
+#the following graph shows an example of a small multiple from the dataset.
 #base_graph <- ggplot(train, aes(Target)) + geom_bar()
 
 #base_graph + facet_grid(cols=vars(Marital.status), rows=vars(Nacionality))
 ```
 
+
+
+\pagebreak
 ### Correllations
 
-```{r}
+The following plots summarize the correlations between attributes.
+
+```{r echo=FALSE, label='plot-correlations', cache=TRUE}
 train_m <- sapply(train, as.numeric)
 train_complete <- complete.cases(train_m)
 train_m <- train_m[train_complete, ]
@@ -544,10 +533,14 @@ corrplot(train.cor, tl.cex = 0.3)
 heatmap(train.cor)
 ```
 
-
+\pagebreak
 ### Bi-Variate EDA
 
-```{r}
+#### Student Age at Enrollment and Target
+
+The following plot explores the spread of the student age ranges at each Target level.
+
+```{r echo=FALSE, label='plot-bivariate-eda', cache=TRUE}
 
 # Plot for Age and Target
 
@@ -562,9 +555,11 @@ ggplot(train, aes(x = Age.at.enrollment, y = Target)) +
 ```
 
 
-### 2. Mother's Qualification and Target
+#### Mother's Qualification and Target
 
-```{r}
+The following plot explores the distribution of Mother's qualification at each Target level.
+
+```{r echo=FALSE, label='plot-mothers-qualifications', cache=TRUE}
 # Bar plot for Mother's Qualification and Target
 ggplot(train, aes(x = factor(Mother.s.qualification), fill = factor(Target))) +
   geom_bar(position = "dodge") +
@@ -576,8 +571,12 @@ ggplot(train, aes(x = factor(Mother.s.qualification), fill = factor(Target))) +
   theme(axis.text.x = element_text(angle = 45, hjust = 1))
 ```
 
-### 3. Father's Qualification and Target
-```{r}
+
+#### Father's Qualification and Target
+
+The following plot explores the distribution of Father's qualification at each Target level.
+
+```{r echo=FALSE , label='plot-fathers-qualifications', cache=TRUE}
 # Bar plot for Father's Qualification and Target
 ggplot(train, aes(x = factor(Father.s.qualification), fill = factor(Target))) +
   geom_bar(position = "dodge") +
@@ -589,8 +588,12 @@ ggplot(train, aes(x = factor(Father.s.qualification), fill = factor(Target))) +
 
 ```
 
-### 4. Mother's Occupation, Father's Occupation, and Target
-```{r}
+
+#### Mother's Occupation, Father's Occupation, and Target
+
+The following plots explore the distributions of parental occupations at each Target level.
+
+```{r echo=FALSE, label='plot-parents-occupations', cache=TRUE}
 # Bar plot for Father's Occupation and Target
 ggplot(train, aes(x = factor(Father.s.occupation), fill = factor(Target))) +
   geom_bar(position = "dodge") +
@@ -613,8 +616,12 @@ ggplot(train, aes(x = factor(Mother.s.occupation), fill = factor(Target))) +
 
 ```
 
-### 5. Previous Qualification and Target
-```{r}
+
+#### Previous Qualification and Target
+
+The following plot explores the distribution of a student's previous qualification at each Target level.
+
+```{r echo=FALSE, label='plot-previous-qualifications', cache=TRUE}
 # Bar plot for Previous Qualification and Target
 ggplot(train, aes(x = factor(Previous.qualification), fill = factor(Target))) +
   geom_bar(position = "dodge")  +
@@ -632,35 +639,46 @@ ggplot(train, aes(x = factor(Previous.qualification), fill = factor(Target))) +
 \pagebreak
 ## Models
 
-### O Models: Random and Majority
+### Base Models
+
+#### O Models: Random and Majority
 
 The models calculated later all need to outperform the most naive models, random guessing, and guess the most popular.
+
+The following shows the confusion matrix and accuracy for a random guess model: 
 
 
 #### 0 Model: Random Guessing
 
-```{r}
+```{r echo=FALSE, label='model-random-guess', cache=TRUE}
 set.seed(1701)
 randomGuessPrediction <- sample(train$Target, nrow(test), replace=FALSE)
 confusionMatrix(randomGuessPrediction, test$Target)
 ```
+
 Random guessing from a distribution that matches the training data gives an accuracy of about 38%. No model should underperform random guessing.
 
+
+
+\pagebreak
 #### 0 Model: Majority
 
-```{r}
+The following shows the confusion matrix and accuracy for a most common value model: 
+
+```{r echo=FALSE, label='model-majority', cache=TRUE}
 graduate <- test$Target[test$Target == "Graduate"][1]
 majorityModelPrediction <- rep(graduate, nrow(test))
 confusionMatrix(majorityModelPrediction, test$Target)
 ```
+
 Picking the most common value for every test record, yields an accuracy of 52%. Later models should beat 52% accuracy to be interesting.
 
-### Model 1 Association Rule Mining
 
+### Association Rule Mining
 
+For association rule mining, the data is converted into transactions, association rules are generated, and visualized.
 
-#### Step 1
-```{r}
+```{r include=FALSE, label='model-asm', cache=TRUE}
 # For association rule mining, we need to convert the data into transactions:
 library(arules)
 
@@ -681,8 +699,7 @@ transactions <- as(train.arm, "transactions")
 ```
 
 
-#### Step 2
-```{r}
+```{r include=FALSE, label='model-asm-rules', cache=TRUE}
 # Generate association rules
 rules_dropout <- apriori(transactions, parameter = list(supp = 0.01, conf = 0.5, target = "rules"),
                  appearance = list(rhs = c("Target=Dropout" ), default = "lhs") , control = list(verbose=F))
@@ -691,8 +708,7 @@ rules_graduate <- apriori(transactions, parameter = list(supp = 0.01, conf = 0.5
 ```
 
 
-#### Step 3
-```{r}
+```{r echo=FALSE, label='model-plot-asm-rules', cache=TRUE}
 
 library(arulesViz)
 
@@ -706,12 +722,17 @@ inspect(rules_dropout_sorted[1:10])
 
 #summarize the rules
 summary(rules_dropout_sorted)
+```
 
+
+```{r eval=FALSE, include=FALSE, label='model-asm-graph-interactive', cache=TRUE}
 #visualize
 plot(rules_dropout_sorted[1:10], method="graph", engine = "interactive")
-
 ```
-```{r}
+
+
+
+```{r echo=FALSE, label='model-asm-rules-graduate', cache=TRUE}
 
 # Inspect Top rules of graduate
 
@@ -725,46 +746,50 @@ plot(rules_graduate_sorted[1:10], method="graph", engine = "interactive")
 
 
 
-
-
-
-
-Here are the clusters grouped by Target.  
-```{r}
+```{r eval=FALSE, include=FALSE, label='clusters-by-target', cache=TRUE}
+# Here are the clusters grouped by Target.  
 # ggplot(data=emdata, aes(x=Target, fill=cluster)) +
 #     geom_bar(stat="count") +
 #     labs(title = "K = ?") +
 #     theme(plot.title = element_text(hjust=0.5),  text=element_text(size=15))
 ```
 
-## k-Means Model
 
-```{r}
+\pagebreak
+### Clustering Models
+
+#### k-Means 
+
+Seven clusters for k-Means produces a pleasing result with the following parameters.
+
+```{r include=FALSE, label='model-kmeans', cache=TRUE}
 train_km <- train_m
 rownames(train_km) <- train[train_complete, ]$Target
 
 set.seed(20)
 ```
 
-Seven clusters for k-Means produces a pleasing result with the following parameters.
 
-```{r, echo=TRUE}
+```{r echo=FALSE, label='model-kmeans-clusters', cache=TRUE}
 Clusters <- kmeans(train_km, 12, iter.max = 100, nstart = 7, algorithm="Hartigan-Wong")
 ```
 
-```{r}
+
+```{r echo=FALSE, label='model-kmeans-plot1', cache=TRUE}
 summary(Clusters)
 Clusters$cluster[1:14]
 ```
 
-```{r}
+```{r echo=FALSE, label='model-kmeans-plot2', cache=TRUE}
 train_km2 <- train[train_complete, ]
 train_km2$cluster <- as.factor(Clusters$cluster)
 clusplot(train_km, train_km2$cluster, color=TRUE, shade=TRUE, labels=0, lines=0)
 ```
 
+
 This dataset does not yield to k-Means clustering, at least with all the numeric variables.
-```{r}
+
+```{r echo=FALSE, label='model-kmeans-plot3', cache=TRUE}
 ggplot(data=train_km2, aes(x=Target, fill=cluster)) +
     geom_bar(stat="count") +
     labs(title = "K = 12") +
@@ -772,12 +797,15 @@ ggplot(data=train_km2, aes(x=Target, fill=cluster)) +
 ```
 
 
+\pagebreak
+### Classification Models
 
-## Decision Tree Model
+#### Decision Tree Model
 
-### Model 3 Decision Tree Classification 
 
-```{r}
+The following section shows the decision tree model, and reports the confusion matrix and accuracy results.
+
+```{r cache=TRUE, include=FALSE, label='model-decision-tree'}
 
 ### For decision tree classification, we'll use the `rpart` package:
 
@@ -787,11 +815,16 @@ ggplot(data=train_km2, aes(x=Target, fill=cluster)) +
 tree_model <- rpart(Target ~ ., data = train, method = "class")
 ```
 
-```{r}
+
+
+```{r cache=TRUE, include=FALSE, label='model-pruned-tree'}
 # Prune the tree to simplify it
 pruned_tree <- prune(tree_model, cp = tree_model$cptable[which.min(tree_model$cptable[,"xerror"]),"CP"])
 ```
-```{r}
+
+
+
+```{r echo=FALSE, cache=TRUE, label='model-pruned-tree-plot'}
 # Plot the pruned tree with improved readability
 par(mar = c(5, 4, 4, 2) + 0.1)  # Adjust the margins as needed
 
@@ -807,10 +840,10 @@ rpart.plot(pruned_tree,
            varlen = 0,  # Full variable names
            compress = TRUE)  # Compress the tree
 
-# text(pruned_tree, use.n = TRUE)
 ```
 
-```{r}
+
+```{r cache=TRUE, include=FALSE, label='model-decision-tree-predictions'}
 #drop the orginal target value
 test %>% select(-Target)
 
@@ -818,19 +851,23 @@ test %>% select(-Target)
 #create the predictions
 predictions <- predict(tree_model, newdata=test, type = "class")
 
-
-# Confusion matrix
-confusionMatrix(predictions, test.target)
-table(predictions, test.target)
 ```
 
-### Model 4 Support Vector Machine with Linear Kernel
+
+```{r cache=TRUE, echo=FALSE, label='model-decision-tree-confusionmatrix'}
+# Confusion matrix
+confusionMatrix(predictions, test.target)
+```
+
+
+\pagebreak
+#### Support Vector Machine with Linear Kernel
 
 A Support Vector machine with a linear kernel model is trained on the training data using 2-fold cross validation.  The model leverages an expanded grid to test for the following values of the C hyperparameter: 0.1, 1, 10. C is a regularization parameter that controls the balance between achieving a low error and minimizing the model complexity.  
 
 The model also is configured to preprocess the training data to remove attributes with 0 variance, and apply centering across all of the samples.  This centers the predictors by subtracting the mean of each predictor from the data, standardizing the data so that the mean of each predictor is zero.
 
-```{r include=FALSE}
+```{r cache=TRUE, include=FALSE, label='model-svm-linear'}
 # Define train control for SVM
 # Run with 2-fold cross validation
 # Compute performance metrics for multiclass classification problem
@@ -863,21 +900,21 @@ svm_linear_model = caret::train(
 
 The following shows the SVM linear model statistics for each value of the C hyper-parameter used to tune the model:
 
-```{r echo=FALSE}
+```{r echo=FALSE, cache=TRUE, label='model-svm-linear-stats'}
 # View SVM linear model statistics
 print(svm_linear_model)
 ```
 
 The following plot shows the Accuracy of the SVM Linear model against the 3 cost hyperparameters.
 
-```{r echo=FALSE}
+```{r echo=FALSE, cache=TRUE, label='model-svm-linear-plot'}
 # Plot the SMV Linear model performance
 plot(svm_linear_model)
 ```
 
 The following reports the Confusion Matrix and Accuracy of the SVM Linear model with the highest accuracy (C=0.1).
 
-```{r echo=FALSE}
+```{r echo=FALSE, label='model-svm-linear-confusionmatrix', cache=TRUE}
 # View confusion matrix of out-of-fold predictions
 svm_out_of_fold_preds = svm_linear_model$pred
 svm_conf_matrix = confusionMatrix(svm_out_of_fold_preds$pred, svm_out_of_fold_preds$obs)
@@ -886,14 +923,14 @@ svm_conf_matrix
 
 The following reports the optimal C value reported by the SVM Linear model generation (C=0.1).
 
-```{r echo=FALSE}
+```{r echo=FALSE, label='model-svm-linear-tune', cache=TRUE}
 #view the optimal parameters
 svm_linear_model$bestTune
 ```
 
 
-
-### Model 5 Support Vector Machine with Polynomial Kernel
+\pagebreak
+#### Support Vector Machine with Polynomial Kernel
 Next, a Support Vector machine with a polynomial kernel model is trained on the training data using 2-fold cross validation.  The model is configured to leverage the following multiple hyperparameters: C, Degree, and Scale.  Building the model with multiple hyperparameters with multiple values is implemented to improve the accuracy of the model based on the optimal combination of hyperparameter values.  
 
 
@@ -909,7 +946,7 @@ The Scale value used is calculated as a ratio of the number of features in the d
 
 The model also is configured to preprocess the training data to remove attributes with 0 variance, and apply centering across all of the samples.  This centers the predictors by subtracting the mean of each predictor from the data, standardizing the data so that the mean of each predictor is zero.
 
-```{r include=FALSE}
+```{r include=FALSE, label='model-svm-poly', cache=TRUE}
 # Define train control for SVM
 # Run with 2-fold cross validation
 # Compute performance metrics for multiclass classification problem
@@ -947,7 +984,7 @@ svm_poly_model = caret::train(
 
 The following shows the SVM Polynomial model statistics for each combination hyperparameters used to tune the model (C and Degree, only, as Scale was set at a constant value):
 
-```{r echo=FALSE}
+```{r echo=FALSE, label='model-svm-poly-stats', cache=TRUE}
 # View model statistics
 print(svm_poly_model)
 ```
@@ -955,7 +992,7 @@ print(svm_poly_model)
 
 The following plot shows the Accuracy of the SVM Polynomial model against the 3 cost and Degree hyperparameters.
 
-```{r echo=FALSE}
+```{r echo=FALSE, label='model-svm-poly-params', cache=TRUE}
 # Plot model performance
 plot(svm_poly_model)
 ```
@@ -963,7 +1000,7 @@ plot(svm_poly_model)
 
 The following reports the Confusion Matrix and Accuracy of the SVM Polynomial model with the highest accuracy (C=1.0, Degree=2).
 
-```{r echo=FALSE}
+```{r echo=FALSE, label='model-svm-poly-confusionmatrix', cache=TRUE}
 # View confusion matrix of out-of-fold predictions
 svm_poly_out_of_fold_preds = svm_poly_model$pred
 svm_conf_matrix = confusionMatrix(svm_poly_out_of_fold_preds$pred, svm_poly_out_of_fold_preds$obs)
@@ -972,19 +1009,20 @@ print(svm_conf_matrix)
 
 The following reports the optimal hyperparameters reported by the SVM Polynomial model generation.
 
-```{r echo=FALSE}
+```{r echo=FALSE, label='model-svm-poly-tune', cache=TRUE}
 #view the optimal parameters
 svm_poly_model$bestTune
 ```
 
 
 
-## Additional Models
+\pagebreak
+The following section leverages PCA to reduce the dimensions of the dataset to the attributes having the most significant impact on the outcome.
+
+#### Dimensionality Reduction
 
 
-# Dimensionality Reduction
-
-```{r}
+```{r echo=FALSE, label='pca-visualization', cache=TRUE}
 # Perform PCA
 pca <- prcomp(train %>% select(where(is.numeric)), center = TRUE, scale. = TRUE)
 
@@ -1010,11 +1048,11 @@ fviz_eig(pca, addlabels = TRUE, ylim = c(0, 50))
 ```
 
 
-# PCA on Selected Factors
+#### PCA on Selected Factors
 
 Based on the Scree plot, it looks like the first few principal components explain a significant portion of the variance. Let’s decide to select the first two principal components for further analysis.
 
-```{r}
+```{r echo=FALSE, label='pca-selected-factors', cache=TRUE}
 
 # Select the number of principal components based on the Scree plot
 selected_pcs <- 2
@@ -1037,10 +1075,10 @@ ggplot(train_pca_selected, aes(x = PC1, y = PC2, color = Target)) +
 
 ```
 
-# MODEL 6 - NAIVE BAYES
+#### Naive Bayes with K-fold CV on Non-PCA Data
 
-# Naive Bayes with k-fold Cross-Validation on Non-PCA Data
-```{r}
+
+```{r echo=FALSE, label='model-nb-kfold-no-pca', cache=TRUE}
 # Set up k-fold cross-validation
 kfolds <- 10
 folds <- createFolds(train$Target, k = kfolds)
@@ -1107,8 +1145,10 @@ ggroc(roc_curve_non_pca) +
 
 
 ```
-# Naive Bayes with K folds validation on Selected PCA Data
-```{r}
+
+
+#### Naive Bayes with K-fold CV on Selected PCA Data
+```{r echo=FALSE, label='model-nb-kfold-with-pca-1', cache=TRUE}
 # Set up k-fold cross-validation
 folds_pca <- createFolds(train_pca_selected$Target, k = kfolds)
 
@@ -1175,9 +1215,12 @@ ggroc(roc_curve_pca) +
 
 
 ```
-# Naive Bayes with K folds on PCA data
 
-```{r}
+
+
+#### Naive Bayes with K-fold CV on PCA data
+
+```{r echo=FALSE, label='model-nb-kfold-with-pca-2', cache=TRUE}
 # Set up k-fold cross-validation
 folds_pca <- createFolds(train_pca$Target, k = kfolds)
 
@@ -1245,11 +1288,11 @@ ggroc(roc_curve_pca) +
 
 
 
+### Ensemble Models
 
-# Model 7 - RANDOM FOREST
-# Random Forest with k-fold Cross-Validation on Non-PCA Data
+#### Random Forest with k-fold CV on Non-PCA Data
 
-```{r}
+```{r echo=FALSE, label='model-randomforest-kfold-no-pca', cache=TRUE}
 # Set up k-fold cross-validation
 train_control <- trainControl(method = "cv", number = 10)
 
@@ -1270,9 +1313,11 @@ print(paste("Random Forest Accuracy (Non-PCA):", rf_accuracy_non_pca))
 
 ```
 
-# Random Forest with k-fold Cross-Validation on PCA Data
 
-```{r}
+
+#### Random Forest with k-fold CV on PCA Data
+
+```{r echo=FALSE, label='model-randomforest-kfold-pca-1', cache=TRUE}
 # Train the model on PCA data
 rf_model_pca <- train(Target ~ ., data = train_pca, method = "rf", trControl = train_control)
 
@@ -1292,9 +1337,10 @@ print(paste("Random Forest Accuracy (PCA):", rf_accuracy_pca))
 ```
 
 
-# Random Forest with K fold Cross Validation on Selected PCA Data
 
-```{r}
+#### Random Forest with K-fold CV on Selected PCA Data
+
+```{r echo=FALSE, label='model-randomforest-kfold-pca-2', cache=TRUE}
 
 # Train the model on selected PCA data
 rf_model_pca_selected <- train(Target ~ ., data = train_pca_selected, method = "rf", trControl = train_control)
@@ -1318,9 +1364,12 @@ print(paste("Random Forest Accuracy (Selected PCA):", rf_accuracy_pca_selected))
 
 
 ```
-# Random Forest with different number of trees on Non PCA data
 
-```{r}
+
+
+#### Random Forest, Variable Tree Numbers, Non PCA data
+
+```{r echo=FALSE, label='model-randomforest-tree-number-no-pca', cache=TRUE}
 
 # Define a grid of different numbers of trees
 tune_grid <- expand.grid(.mtry = c(2, 4, 6, 8, 10))
@@ -1340,9 +1389,11 @@ rf_accuracy_non_pca <- conf_matrix_non_pca$overall['Accuracy']
 print(paste("Random Forest Accuracy (Non-PCA):", rf_accuracy_non_pca))
 ```
 
-# Random Forest with different Numbers of Trees on Selected PCA data
 
-```{r}
+
+#### Random Forest, Variable Tree Numbers, Selected PCA data
+
+```{r echo=FALSE, label='model-randomforest-tree-number-pca-1', cache=TRUE}
 # Define a grid of different numbers of trees
 tune_grid <- expand.grid(.mtry = c(2, 4, 6, 8, 10))
 
@@ -1366,9 +1417,11 @@ print(paste("Random Forest Accuracy (Selected PCA):", rf_accuracy_pca_selected))
 
 
 ```
-# Random Forest with different Numbers of Trees on PCA data
 
-```{r}
+
+#### Random Forest, Variiable Tree Numbers, PCA data
+
+```{r cache=TRUE, include=FALSE, label='model-randomforest-tree-number-pca-2'}
 # Define a grid of different numbers of trees
 tune_grid <- expand.grid(.mtry = c(2, 4, 6, 8, 10))
 
@@ -1387,7 +1440,8 @@ test_pca <- as.data.frame(predict(pca, newdata = test %>% select(where(is.numeri
 test_pca$Target <- test$Target
 ```
 
-```{r}
+
+```{r echo=FALSE, label='model-randomforest-pca2-predict', cache=TRUE}
 # Predict on the test set
 predictions_pca <- predict(rf_model_pca, newdata = test_pca)
 
@@ -1402,9 +1456,10 @@ print(paste("Random Forest Accuracy (PCA):", rf_accuracy_pca))
 
 ```
 
+### Lazy Learning Models
 
-# KNN on Non PCA data
-```{r}
+#### KNN on Non PCA data
+```{r echo=FALSE, label='model-knn-no-pca', cache=TRUE}
 
 # Set seed for reproducibility
 set.seed(123)
@@ -1483,9 +1538,11 @@ ggroc(roc_curve_knn) +
 
 ```
 
-# KNN on PCA data
 
-```{r}
+
+#### KNN on PCA data
+
+```{r echo=FALSE, label='model-knn-pca', cache=TRUE}
 
 # Set seed for reproducibility
 set.seed(123)
@@ -1562,7 +1619,10 @@ ggroc(roc_curve_knn_pca) +
   ylab("Sensitivity")
 ```
 
-# Model: Multinomial Logistic Regression - All Attributes
+
+
+### Logistic Regression Models 
+#### Multinomial Logistic Regression - All Attributes
 
 Given the outcome variable is a factor with three levels, a multinomial logistic regression model is built using the nnet package to fit the "Target" attribute.  The nnet::multinom() function converts factors to indicator variables internally, avoiding the need to convert factor type attributes to dummy variables before running the model.  In addition, the nnet::multinom() function does not require removing the outcome variable from the test data.
 
@@ -1571,13 +1631,13 @@ The first multinomial logistic regression model is run on all the data to fit fo
 
 For reference, the values of the Target attributed are ordered as follows:
 
-```{r echo=FALSE}
+```{r echo=FALSE, label='view-target-levels', cache=TRUE}
 levels(studentSuccessData$Target)
 ```
 
 The model is created using the nnet::multinom() function and used to generate predictions using the test data.
 
-```{r include=FALSE}
+```{r include=FALSE, label='model-multinom-1', cache=TRUE}
 #set seed
 set.seed(711)
 
@@ -1589,7 +1649,9 @@ multinom_model_Target_All_Data <- nnet::multinom(Target ~ ., data = train)
 summary(multinom_model_Target_All_Data)
 ```
 
-```{r include=FALSE}
+
+
+```{r include=FALSE, label='model-multinom-1-predict', cache=TRUE}
 # Predict class probabilities
 predicted_probs_log_reg_1 <- stats::predict(multinom_model_Target_All_Data, newdata = test, type = "probs")
 
@@ -1597,30 +1659,34 @@ predicted_probs_log_reg_1 <- stats::predict(multinom_model_Target_All_Data, newd
 predicted_classes_log_reg_1 <- colnames(predicted_probs_log_reg_1)[apply(predicted_probs_log_reg_1, 1, which.max)]
 ```
 
+
 The confusion matrix generated from the model:
 
-```{r echo=FALSE}
+```{r echo=FALSE, label='model-multinom-1-confusionmatrix', cache=TRUE}
 # Confusion matrix
 # Compare predicted classes to the actual Target values in the test Data
 conf_matrix_log_reg_1 <- confusionMatrix(factor(predicted_classes_log_reg_1, levels = levels(test$Target)), test$Target)
 print(conf_matrix_log_reg_1)
 ```
 
+
 The accuracy generated from the model:
 
-```{r echo=FALSE}
+```{r echo=FALSE, label='model-multinom-1-accuracy', cache=TRUE}
 # Accuracy
 accuracy <- sum(predicted_classes_log_reg_1 == test$Target) / nrow(test)
 print(paste("Accuracy:", round(accuracy, 2)))
 ```
 
-# Model: Multinomial Logistic Regression - Significant Attributes
+
+
+#### Multinomial Logistic Regression - Significant Attributes
 
 The second multinomial logistic regression model is built to fit the outcome "Target" attribute using predictor attributes present in strong and significant rules found during association rule mining above.
 
 The model is created using the nnet::multinom() function and used to generate predictions using the test data.
 
-```{r include=FALSE}
+```{r include=FALSE, label='model-multinom-2', cache=TRUE}
 #set seed
 set.seed(711)
 
@@ -1638,7 +1704,7 @@ summary(multinom_model_Target_focused)
 
 
 
-```{r include=FALSE}
+```{r include=FALSE, label='model-multinom-2-subset', cache=TRUE}
 #first, prepare the test data subset of the same length as predicted classes
 test_multinom_focused <- test %>% dplyr::select(Target, Previous.qualification, Age.at.enrollment, Application.mode, 
                                              Father.s.qualification, Curricular.units.2nd.sem..grade.,  
@@ -1649,7 +1715,7 @@ test_multinom_focused <- test %>% dplyr::select(Target, Previous.qualification, 
 
 
 
-```{r include=FALSE}
+```{r include=FALSE, label='model-multinom-2-predict', cache=TRUE}
 # Make predictions
 predicted_probs_log_reg_2 <- stats::predict(multinom_model_Target_focused, newdata = test_multinom_focused, type = "probs")
 predicted_classes_log_reg_2 <- colnames(predicted_probs_log_reg_2)[apply(predicted_probs_log_reg_2, 1, which.max)]
@@ -1658,7 +1724,7 @@ predicted_classes_log_reg_2 <- colnames(predicted_probs_log_reg_2)[apply(predict
 
 The confusion matrix generated from the model:
 
-```{r echo=FALSE}
+```{r echo=FALSE, label='model-multinom-2-confusionmatrix', cache=TRUE}
 # Combine predictions with actual outcomes
 results <- data.frame(
   actual = test$Target,
@@ -1673,18 +1739,20 @@ conf_matrix_log_reg_2
 
 The accuracy generated from the model:
 
-```{r echo=FALSE}
+```{r echo=FALSE, label='model-multinom-2-accuracy', cache=TRUE}
 # Calculate and print the accuracy
 accuracy <- conf_matrix_log_reg_2$overall['Accuracy']
 print(paste("Accuracy:", round(accuracy * 100, 2), "%"))
 ```
 
 
-# Model: Binary Logistic Regression - all attributes
+
+
+#### Binary Logistic Regression - all attributes
 
 To run a binary logistic regression, additional data transformation is required.  First, a copy of the dataset is created.  A new binary outcome variable titled "Dropout" is added to the dataset to represent contain the value 1 if Target=Dropout.  This attribute will contain a value of 0 when the Target attribute contains "Graduate" or "Enrolled".  In addition, the Target attribute is removed.
 
-```{r include=FALSE}
+```{r cache=TRUE, include=FALSE, label='model-binom-1-dataprep-1'}
 studentSuccessData_regrssion <- studentSuccessData
 
 # Remove rows with any NA values
@@ -1692,7 +1760,8 @@ studentSuccessData_regrssion <- studentSuccessData_regrssion[complete.cases(stud
 ```
 
 
-```{r include=FALSE}
+
+```{r cache=TRUE, include=FALSE, label='model-binom-1-dataprep-2'}
 #1.) add a column to hold Dropout, default to 0
 studentSuccessData_regression <- studentSuccessData %>% mutate(Dropout=0)
     
@@ -1708,9 +1777,10 @@ studentSuccessData_regression <- studentSuccessData_regression %>% dplyr::select
 
 ```
 
+
 Next, train and test data is created with a 70/30 split, respectively.
 
-```{r include=FALSE}
+```{r cache=TRUE, include=FALSE, label='model-binom-1-train-test'}
 set.seed(711)
   
 ind <- sample(c(TRUE, FALSE), size=nrow(studentSuccessData_regression), replace=TRUE, prob=c(0.7, 0.3))
@@ -1722,7 +1792,7 @@ test_regression <- studentSuccessData_regression[!ind, ]
 
 After data preparation, a binary logistic regression model is created to specifically fit for the outcome attribute "Dropout".  The outcome shows coefficient estimates for predictor variables.  Coefficients having a p-value < 0.05 are statistically significant in the model. 
 
-```{r include=FALSE}
+```{r cache=TRUE, include=FALSE, label='model-binom-1-summary'}
 #set seed
 set.seed(711)
 
@@ -1737,13 +1807,14 @@ summary(glm_model_Dropout_All_Data)
 The model did not successfully converge to a solution for the generalized linear model (GLM). The model created aliased coefficients indicating that some predictors are colinear with other predictors, or there are redundant predictors in the model leading to singularities.  To address this, an additional and simplified binomial logistic regression model is needed.  The next section builds and tests the simplified model.
 
 
-# Model: Binary Logistic Regression - significant attributes
+
+#### Binary Logistic Regression - significant attributes
 
 The second mbinomial logistic regression mode is built to fit the outcome "Dropout" attribute using predictor attributes present in strong and significant rules found during association rule mining above.
 
 The binary logistic regression model is Fit to predict Dropout using focused set of attributes.  The following shows the summary of the model:
 
-```{r echo=FALSE}
+```{r cache=TRUE, include=FALSE, label='model-binom-2-summary'}
 #set seed
 set.seed(711)
 
@@ -1761,7 +1832,7 @@ summary(glm_model_Dropout_Focused)
 
 Next, predictions are run using the model and the test data.
 
-```{r echo=FALSE}
+```{r echo=FALSE, label='model-binom-2-predict', cache=TRUE}
 # Generate predicted probabilities
 predicted_probs_log_reg_4 <- stats::predict(glm_model_Dropout_Focused, newdata = test_regression, type = "response")
 
@@ -1773,7 +1844,7 @@ predicted_classes_log_reg_4 <- ifelse(predicted_probs_log_reg_4 > 0.5, "1", "0")
 
 The confusion matrix for the model:
 
-```{r}
+```{r echo=FALSE, label='model-binom-2-confusionmatrix', cache=TRUE}
 # Combine predictions with actual outcomes
 results <- data.frame(
   actual = test_regression$Dropout,
@@ -1789,16 +1860,30 @@ print(confusion_matrix_log_reg_4)
 
 ```
 
+
 The accuracy generated from the model:
 
-```{r}
+```{r echo=FALSE, label='model-binom-2-accuracy', cache=TRUE}
 # Print the accuracy
 accuracy <- confusion_matrix_log_reg_4$overall['Accuracy']
 print(paste("Accuracy:", round(accuracy * 100, 2), "%"))
 ```
+\pagebreak
+# Results
+## Summary
+
+## Association Rule Mining
+## Clusting Models
+## Classification Models
+## Ensemble Models
+## Lazy Learning Models
+## Logistic Regression Models
+
+
+
 
 \pagebreak
-# Conclusions
+# Conclusions & Key Take-Aways
 
 
 
