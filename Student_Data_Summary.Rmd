@@ -479,7 +479,7 @@ svm_test <- test
 # remove labels from the test set
 svm_test_label <- svm_test$Target
 
-svm_test <- svm_test[,-1] 
+svm_test <- svm_test %>% select(-Target)
 ```
 
 
@@ -912,20 +912,31 @@ The following plot shows the Accuracy of the SVM Linear model against the 3 cost
 plot(svm_linear_model)
 ```
 
-The following reports the Confusion Matrix and Accuracy of the SVM Linear model with the highest accuracy (C=0.1).
 
-```{r echo=FALSE, label='model-svm-linear-confusionmatrix', cache=TRUE}
+```{r cache=TRUE, include=FALSE, label='model-svm-linear-confusionmatrix-train'}
+#The following reports the Confusion Matrix and Accuracy of the SVM Linear model with the train dataset and the C hyperparameter =0.1.
+
 # View confusion matrix of out-of-fold predictions
 svm_out_of_fold_preds = svm_linear_model$pred
 svm_conf_matrix = confusionMatrix(svm_out_of_fold_preds$pred, svm_out_of_fold_preds$obs)
 svm_conf_matrix
 ```
 
-The following reports the optimal C value reported by the SVM Linear model generation (C=0.1).
+Finally, the model is tested using the test dataset to show the final accuracy:
 
-```{r echo=FALSE, label='model-svm-linear-tune', cache=TRUE}
+```{r cache=TRUE, include=FALSE, label='model-svm-linear-test-predictions'}
 #view the optimal parameters
-svm_linear_model$bestTune
+# Make predictions on the new dataset using the trained SVM model
+svm_linear_predictions <- predict(svm_linear_model, newdata = svm_test)
+```
+
+
+```{r echo=FALSE, cache=TRUE, label='model-svm-linear-test-confusionmatrix'}
+# Calculate the confusion matrix
+conf_matrix_svm_linear <- confusionMatrix(svm_linear_predictions, svm_test_label)
+
+# Output the confusion matrix
+print(conf_matrix_svm_linear)
 ```
 
 
@@ -984,7 +995,7 @@ svm_poly_model = caret::train(
 
 The following shows the SVM Polynomial model statistics for each combination hyperparameters used to tune the model (C and Degree, only, as Scale was set at a constant value):
 
-```{r echo=FALSE, label='model-svm-poly-stats', cache=TRUE}
+```{r echo=FALSE, cache=TRUE, label='model-svm-poly-stats'}
 # View model statistics
 print(svm_poly_model)
 ```
@@ -998,9 +1009,10 @@ plot(svm_poly_model)
 ```
 
 
-The following reports the Confusion Matrix and Accuracy of the SVM Polynomial model with the highest accuracy (C=1.0, Degree=2).
 
-```{r echo=FALSE, label='model-svm-poly-confusionmatrix', cache=TRUE}
+
+```{r cache=TRUE, include=FALSE, label='model-svm-poly-confusionmatrix'}
+#The following reports the confusion Matrix and Accuracy of the SVM Polynomial model during training with the highest accuracy (C=1.0, Degree=2).
 # View confusion matrix of out-of-fold predictions
 svm_poly_out_of_fold_preds = svm_poly_model$pred
 svm_conf_matrix = confusionMatrix(svm_poly_out_of_fold_preds$pred, svm_poly_out_of_fold_preds$obs)
@@ -1014,6 +1026,22 @@ The following reports the optimal hyperparameters reported by the SVM Polynomial
 svm_poly_model$bestTune
 ```
 
+Finally, the model is tested using the test dataset to show the final accuracy:
+
+```{r cache=TRUE, include=FALSE, label='model-svm-poly-test-predictions'}
+#view the optimal parameters
+# Make predictions on the new dataset using the trained SVM model
+svm_poly_predictions <- predict(svm_poly_model, newdata = svm_test)
+```
+
+
+```{r echo=FALSE, cache=TRUE, label='model-svm-poly-test-confusionmatrix'}
+# Calculate the confusion matrix
+conf_matrix_svm_poly <- confusionMatrix(svm_poly_predictions, svm_test_label)
+
+# Output the confusion matrix
+print(conf_matrix_svm_poly)
+```
 
 
 \pagebreak
@@ -1810,7 +1838,7 @@ The model did not successfully converge to a solution for the generalized linear
 
 #### Binary Logistic Regression - significant attributes
 
-The second mbinomial logistic regression mode is built to fit the outcome "Dropout" attribute using predictor attributes present in strong and significant rules found during association rule mining above.
+The second binomial logistic regression model is built to fit the outcome "Dropout" attribute using predictor attributes present in strong and significant rules found during association rule mining above.
 
 The binary logistic regression model is Fit to predict Dropout using focused set of attributes.  The following shows the summary of the model:
 
@@ -1872,103 +1900,59 @@ print(paste("Accuracy:", round(accuracy * 100, 2), "%"))
 # Results
 
 ## Results Summary Table
-```{r echo=FALSE}
-model <- c("Random Guess", 
-               "Most Common Value", 
-               "K-means", 
-               "Decision Tree", 
-               "Support Vector Machine - Linear", 
-               "Support Vector Machine - Polynomial",
-               "Naive Bayes, K-Fold, Non-PCA", 
-               "Naive Bayes, K-Fold, Selected-PCA", 
-               "Naive Bayes, K-Fold, PCA", 
-               "Random Forest, K-Fold, Non-PCA", 
-               "Random Forest, K-Fold, PCA", 
-               "Random Forest, K-Fold, Selected PCA",
-               "Random Forest, Variable Tree Numbers, Non-PCA",
-               "Random Forest, Variable Tree Numbers, Selected PCA",
-               "Random Forest, Variable Tree Numbers, PCA",
-               "KNN, non-PCA",
-               "KNN PCA",
-               "Multinomial Logistic Regression - All Attributes",
-               "Multinomial Logistic Regression - Select Attributes",
-               "Biinomial Logistic Regression - All Attributes",
-               "Biinomial Logistic Regression - Select Attributes")
+```{r cache=TRUE, include=FALSE, label='results-summary-combined-data'}
 
-type <- c("Base", 
-               "Base", 
-               "Clustering", 
-               "Classification", 
-               "Classification", 
-               "Classification",
-               "Classification", 
-               "Classification", 
-               "Classification", 
-               "Ensemble",
-               "Ensemble",
-               "Ensemble",
-               "Ensemble",
-               "Ensemble",
-               "Ensemble",
-               "Lazy Learning", 
-               "Lazy Learning",
-               "Logistic Regression",
-               "Logistic Regression",
-               "Logistic Regression",
-               "Logistic Regression")
+#create vectors to hold results
+results_model_1 <- c(37.73,"Random Guess","Base","")
+results_model_2 <- c(51.84,"Most Common Value","BAse","")
+results_model_3 <- c(0,"K-means","Clustering","NaN - Failed to Converge.")
+results_model_4 <- c(73.82,"Decision Tree","Classification","")
+results_model_5 <- c(77.87,"Support Vector Machine - Linear","Classification","")
+results_model_6 <- c(74.04,"Support Vector Machine - Polynomial","Classification","")
+results_model_7 <- c(60.39,"Naive Bayes, K-Fold, Non-PCA","Classification","Average of 10 folds.")
+results_model_8 <- c(65.48,"Naive Bayes, K-Fold, Selected-PCA","Classification","Average of 10 folds.")
+results_model_9 <- c(64.66,"Naive Bayes, K-Fold, PCA","Classification","Average of 10 folds.")
+results_model_10 <- c(77.49,"Random Forest, K-Fold, Non-PCA","Ensemble","")
+results_model_11 <- c(76.44,"Random Forest, K-Fold, PCA","Ensemble","")
+results_model_12 <- c(66.62,"Random Forest, K-Fold, Selected PCA","Ensemble","")
+results_model_13 <- c(76.74,"Random Forest, Variable Tree Numbers, Non-PCA","Ensemble","")
+results_model_14 <- c(66.47,"Random Forest, Variable Tree Numbers, Selected PCA","Ensemble","")
+results_model_15 <- c(66.54,"Random Forest, Variable Tree Numbers, PCA","Ensemble","")
+results_model_16 <- c(59.15,"KNN, non-PCA","Lazy Learning","Average of 10 folds.")
+results_model_17 <- c(65.84,"KNN PCA","Lazy Learning","Average of 10 folds.")
+results_model_18 <- c(77.64,"Multinomial Logistic Regression - All Attributes","Logistic Regression","")
+results_model_19 <- c(69.62,"Multinomial Logistic Regression - Select Attributes","Logistic Regression","")
+results_model_20 <- c(0,"Binomial Logistic Regression - All Attributes","Logistic Regression","NaN - Failed to Converge.")
+results_model_21 <- c(85.22,"Binomial Logistic Regression - Select Attributes","Logistic Regression","")
 
-accuracy <- c("37.73",
-                   "51.84",
-                   "NaN",
-                   "73.82",
-                   "76.24",
-                   "75.33",
-                   "60.39",
-                   "65.48",
-                   "64.66",
-                   "77.49",
-                   "76.44",
-                   "66.62",
-                   "76.74",
-                   "66.47",
-                   "66.54",
-                   "59.15",
-                   "65.84",
-                   "77.64",
-                   "69.62",
-                   "NaN",
-                   "85.22")
+#row bind the vectors into a matrix
+results_matrix <- rbind(results_model_1, results_model_2,results_model_3,results_model_4,results_model_5,
+                        results_model_6,results_model_7,results_model_8,results_model_9,results_model_10,
+                        results_model_11,results_model_12,results_model_13,results_model_14,results_model_15,
+                        results_model_16,results_model_17,results_model_18,results_model_19,results_model_20,
+                        results_model_21)
 
-rank <- c(19,18,20,8,6,7,16,14,15,3,5,10,4,12,11,17,13,2,9,21,1)
+#convert matrix to a dataframe
+all_results_combined_summary <- as.data.frame(results_matrix, stringsAsFactors = FALSE)
 
-comments <- c("",
-                   "",
-                   "",
-                   "",
-                   "",
-                   "",
-                   "Average of 10 folds.",
-                   "Average of 10 folds.",
-                   "Average of 10 folds.",
-                   "",
-                   "",
-                   "",
-                   "",
-                   "",
-                   "",
-                   "Average of 10 folds.",
-                   "Average of 10 folds.",
-                   "",
-                   "",
-                   "",
-                   "")
+# Assign column names to the dataframe
+colnames(all_results_combined_summary) <- c("Accuracy", "Model", "Type", "Comments")
 
-modelResultsSummary <- data.frame(rank,model,accuracy,type)
+# Convert the "Value" column to numeric
+all_results_combined_summary$Accuracy <- as.numeric(all_results_combined_summary$Accuracy)
 
-#sort the importance dataframe by the calculated importance 
-modelResultsSummary <- modelResultsSummary %>% arrange(rank)
+# Sort the dataframe by the "Value" column
+all_results_combined_sorted <- all_results_combined_summary[order(all_results_combined_summary$Accuracy, decreasing = TRUE), ]
 
-kable(modelResultsSummary)
+# Remove row labels by resetting row names to NULL
+rownames(all_results_combined_sorted) <- NULL
+
+# Display the sorted dataframe
+head(all_results_combined_sorted)
+```
+
+```{r echo=FALSE, cache=TRUE, label='results-summary-combined-showoutput'}
+kable(all_results_combined_sorted)
 ```
 
 \pagebreak
