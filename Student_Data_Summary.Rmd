@@ -643,7 +643,7 @@ ggplot(train, aes(x = factor(Previous.qualification), fill = factor(Target))) +
 
 #### O Models: Random and Majority
 
-The models calculated later all need to outperform the most naive models, random guessing, and guess the most popular.
+The models calculated later all need to outperform the most naive models: random guessing, and guess the most popular.
 
 The following shows the confusion matrix and accuracy for a random guess model: 
 
