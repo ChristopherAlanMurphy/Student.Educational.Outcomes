@@ -40,24 +40,49 @@ search()
 
 
 # Introduction
- 
+
+When students fail to succeed in higher education, it can directly impact the economic growth of that individual, their families, and the broader economy.
+
+The concept of education has evolved significantly over the centuries. From the ancient and medieval periods, where it was a privilege of the few, to the modern era, education is now widely recognized as a fundamental right. The evolution of school systems reflects the changing societal values and the increasing emphasis on accessible education for all. Educational models have continuously adapted to these societal changes, striving to provide equitable learning opportunities and to foster environments where diverse student populations can thrive.
+
+Students face challenges that affect drop-out and graduation, such as demographics, socio-economic factors, academic progress, and the macro-economic environment.
+
+Graduation is a major life milestone that can greatly affect the direction of a student's life. It can be a firm start on building a career in a fulfilling profession. It can provide access to a wider range of professions.
+
+Understanding factors leading to drop-out or graduation is important for all stakeholders: students, families, schools, and society as a whole.
+
+Parents have aspirations for their children. Building awareness of the factors leading to drop-out, parents can provide support where it is most effective. Parents want their children to move out of the house damit.
+
+Schools are interested in seeing students becoming successful alumni. By understanding factors leading to drop out, schools can provide early intervention to improve graduation rates.
+
+Increasing the gradution rates and decreasing the drop-out rate leads to a skilled workforce benefitting Society as a whole.
+
+## Research Questions
+
+Can data mining techniques accurately identify key predictors, their interactions, and parameter ranges of concern?
+
+* What factors influence a student to drop-out?
+* What distinguishable combination of factors could predict a drop out event?
+* Which machine learning models provide accurate predictions?
 
 # Analysis and Models
 
 
 ## About the data
 
+The dataset has 4424 observations with 37 attributes.
 
-### Dataset Summary
-The following dataset was located on Kaggle at the following page:
+There are robust measures covering Demographics, Social-Economic data, Academic progress tracking, and External Macro-economic environment. The target variable indicates whether a student dropped out or achieved academic success. The data spans multiple semesters.  Researchers can leverage this dataset to develop models for predicting dropout and academic success, contributing to the understanding of factors influencing educational outcomes. The data comes from educational institutions in Portugal.
+
+Academic progress tracking is measured through a multi-step process of credit attainment.
+
+The dataset was retrieve from Kaggle at the following page in September 2024.
 
 https://www.kaggle.com/code/mdismielhossenabir/student-s-dropout-and-academic-success
 
 The original source at UCI is here:
 
 https://archive.ics.uci.edu/dataset/697/predict+students+dropout+and+academic+success
-
-This dataset contains information on students' marital status, application details, previous qualifications, family background, admission grades, financial status, and academic performance. The target variable indicates whether a student dropped out or achieved academic success. The data spans multiple semesters and includes economic indicators such as unemployment rate, inflation rate, and GDP. Researchers can leverage this dataset to develop models for predicting dropout and academic success, contributing to the understanding of factors influencing educational outcomes.
 
 
 #### Data Retrieval
