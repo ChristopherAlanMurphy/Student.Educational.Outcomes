@@ -1149,19 +1149,9 @@ for (k in 1:kfolds) {
   # Predict on Test Data
   nb_Pred <- predict(naive_bayes_model, newdata = fold_test)
   
-  #Visualize
-  plot(nb_Pred, ylab= "Density", main = "Naive Bayes Plot")
-  
   # Ensure predictions and actual labels are factors with the same levels
   nb_Pred <- factor(nb_Pred, levels = unique(c(levels(nb_Pred), levels(fold_test$Target))))
   fold_test$Target <- factor(fold_test$Target, levels = unique(c(levels(nb_Pred), levels(fold_test$Target))))
-  
-  # Visualize Naive Bayes Predictions
-  plot <- ggplot(data.frame(Prediction = nb_Pred), aes(x = Prediction)) +
-    geom_density(fill = "blue", alpha = 0.5) +
-    labs(title = paste("Naive Bayes Plot - Fold", k), y = "Density") +
-    theme_minimal()
-  print(plot)
   
   # Evaluate Model
   conf_matrix <- confusionMatrix(nb_Pred, fold_test$Target)
@@ -1175,6 +1165,17 @@ for (k in 1:kfolds) {
   AllResults_non_pca <- c(AllResults_non_pca, nb_Pred)
   AllLabels_non_pca <- c(AllLabels_non_pca, fold_test$Target)
 }
+
+#Visualize
+plot(nb_Pred, ylab= "Density", main = "Naive Bayes Plot")
+
+# Visualize Naive Bayes Predictions
+plot <- ggplot(data.frame(Prediction = nb_Pred), aes(x = Prediction)) +
+  geom_density(fill = "blue", alpha = 0.5) +
+  labs(title = paste("Naive Bayes Plot - Fold", k), y = "Density") +
+  theme_minimal()
+print(plot)
+  
 
 # Confusion Matrix (across all folds)
 final_conf_matrix_non_pca <- table(unlist(AllResults_non_pca), unlist(AllLabels_non_pca))
@@ -1218,20 +1219,9 @@ for (k in 1:kfolds) {
   # Predict on Test Data
   nb_Pred <- predict(naive_bayes_model, newdata = fold_test)
   
-  #Visualize
-  plot(nb_Pred, ylab= "Density", main = "Naive Bayes Plot")
-  
   # Ensure predictions and actual labels are factors with the same levels
   nb_Pred <- factor(nb_Pred, levels = unique(c(levels(nb_Pred), levels(fold_test$Target))))
   fold_test$Target <- factor(fold_test$Target, levels = unique(c(levels(nb_Pred), levels(fold_test$Target))))
-  
-  # Visualize Naive Bayes Predictions
-  plot <- ggplot(data.frame(Prediction = nb_Pred), aes(x = Prediction)) +
-    geom_density(fill = "blue", alpha = 0.5) +
-    labs(title = paste("Naive Bayes Plot - Fold", k), y = "Density") +
-    theme_minimal()
-  print(plot)
-  
   
   # Evaluate Model
   conf_matrix <- confusionMatrix(nb_Pred, fold_test$Target)
@@ -1245,6 +1235,16 @@ for (k in 1:kfolds) {
   AllResults_pca <- c(AllResults_pca, nb_Pred)
   AllLabels_pca <- c(AllLabels_pca, fold_test$Target)
 }
+
+#Visualize
+plot(nb_Pred, ylab= "Density", main = "Naive Bayes Plot")
+
+# Visualize Naive Bayes Predictions
+plot <- ggplot(data.frame(Prediction = nb_Pred), aes(x = Prediction)) +
+  geom_density(fill = "blue", alpha = 0.5) +
+  labs(title = paste("Naive Bayes Plot - Fold", k), y = "Density") +
+  theme_minimal()
+print(plot)
 
 # Confusion Matrix (across all folds)
 final_conf_matrix_pca <- table(unlist(AllResults_pca), unlist(AllLabels_pca))
@@ -1290,19 +1290,9 @@ for (k in 1:kfolds) {
   # Predict on Test Data
   nb_Pred <- predict(naive_bayes_model, newdata = fold_test)
   
-  #Visualize
-  plot(nb_Pred, ylab= "Density", main = "Naive Bayes Plot")
-  
   # Ensure predictions and actual labels are factors with the same levels
   nb_Pred <- factor(nb_Pred, levels = unique(c(levels(nb_Pred), levels(fold_test$Target))))
   fold_test$Target <- factor(fold_test$Target, levels = unique(c(levels(nb_Pred), levels(fold_test$Target))))
-  
-  # Visualize Naive Bayes Predictions
-  plot <- ggplot(data.frame(Prediction = nb_Pred), aes(x = Prediction)) +
-    geom_density(fill = "blue", alpha = 0.5) +
-    labs(title = paste("Naive Bayes Plot - Fold", k), y = "Density") +
-    theme_minimal()
-  print(plot)
   
   # Evaluate Model
   conf_matrix <- confusionMatrix(nb_Pred, fold_test$Target)
@@ -1317,6 +1307,16 @@ for (k in 1:kfolds) {
   AllLabels_pca <- c(AllLabels_pca, fold_test$Target)
 }
 
+#Visualize
+plot(nb_Pred, ylab= "Density", main = "Naive Bayes Plot")
+
+# Visualize Naive Bayes Predictions
+plot <- ggplot(data.frame(Prediction = nb_Pred), aes(x = Prediction)) +
+  geom_density(fill = "blue", alpha = 0.5) +
+  labs(title = paste("Naive Bayes Plot - Fold", k), y = "Density") +
+  theme_minimal()
+print(plot)
+  
 # Confusion Matrix (across all folds)
 final_conf_matrix_pca <- table(unlist(AllResults_pca), unlist(AllLabels_pca))
 print(final_conf_matrix_pca)
@@ -1545,17 +1545,8 @@ for (k in 1:kfolds) {
   knn_predictions <- factor(knn_predictions, levels = unique(c(levels(knn_predictions), levels(fold_test$Target))))
   fold_test$Target <- factor(fold_test$Target, levels = unique(c(levels(knn_predictions), levels(fold_test$Target))))
   
-  # Visualize k-NN Predictions
-  plot <- ggplot(data.frame(Prediction = knn_predictions), aes(x = Prediction)) +
-    geom_density(fill = "green", alpha = 0.5) +
-    labs(title = paste("k-NN Plot - Fold", k), y = "Density") +
-    theme_minimal()
-  print(plot)
-  
-  # Evaluate Model
   conf_matrix <- confusionMatrix(knn_predictions, fold_test$Target)
-  print(conf_matrix)
-  
+
   # Calculate accuracy
   accuracy <- sum(diag(conf_matrix$table)) / sum(conf_matrix$table)
   print(paste("Accuracy: Fold", k, "-", round(accuracy * 100, 2), "%", sep = " "))
@@ -1565,6 +1556,16 @@ for (k in 1:kfolds) {
   AllLabels_knn <- c(AllLabels_knn, fold_test$Target)
 }
 
+# Visualize k-NN Predictions
+plot <- ggplot(data.frame(Prediction = knn_predictions), aes(x = Prediction)) +
+  geom_density(fill = "green", alpha = 0.5) +
+  labs(title = paste("k-NN Plot - Fold", k), y = "Density") +
+  theme_minimal()
+print(plot)
+
+# Evaluate Model
+print(conf_matrix)
+  
 # Calculate overall accuracy
 overall_accuracy <- confusionMatrix(factor(unlist(AllResults_knn)), factor(unlist(AllLabels_knn)))$overall['Accuracy']
 print(paste("Overall k-NN Accuracy:", overall_accuracy))
@@ -1628,13 +1629,6 @@ for (k in 1:kfolds) {
   knn_predictions_pca <- factor(knn_predictions_pca, levels = unique(c(levels(knn_predictions_pca), levels(fold_test_pca$Target))))
   fold_test_pca$Target <- factor(fold_test_pca$Target, levels = unique(c(levels(knn_predictions_pca), levels(fold_test_pca$Target))))
   
-  # Visualize k-NN Predictions
-  plot <- ggplot(data.frame(Prediction = knn_predictions_pca), aes(x = Prediction)) +
-    geom_density(fill = "green", alpha = 0.5) +
-    labs(title = paste("k-NN Plot - Fold", k), y = "Density") +
-    theme_minimal()
-  print(plot)
-  
   # Evaluate Model
   conf_matrix_pca <- confusionMatrix(knn_predictions_pca, fold_test_pca$Target)
   print(conf_matrix_pca)
@@ -1647,6 +1641,16 @@ for (k in 1:kfolds) {
   AllResults_knn_pca <- c(AllResults_knn, knn_predictions_pca)
   AllLabels_knn_pca <- c(AllLabels_knn, fold_test_pca$Target)
 }
+
+# Visualize k-NN Predictions
+plot <- ggplot(data.frame(Prediction = knn_predictions_pca), aes(x = Prediction)) +
+  geom_density(fill = "green", alpha = 0.5) +
+  labs(title = paste("k-NN Plot - Fold", k), y = "Density") +
+  theme_minimal()
+print(plot)
+
+# Evaluate Model
+print(conf_matrix_pca)
 
 # Calculate overall accuracy
 overall_accuracy <- confusionMatrix(factor(unlist(AllResults_knn_pca)), factor(unlist(AllLabels_knn_pca)))$overall['Accuracy']
@@ -1979,28 +1983,45 @@ head(all_results_combined_sorted)
 ```{r echo=FALSE, cache=TRUE, label='results-summary-combined-showoutput'}
 kable(all_results_combined_sorted)
 ```
+## Factors that influence drop-out
 
-\pagebreak
-## Association Rule Mining
-## Clusting Models
-## Classification Models
-## Ensemble Models
-## Lazy Learning Models
-## Logistic Regression Models
+Several models highlighted the same factors which seem to affect
+drop-out likelihood. Critical predictors include parents'
+qualificationa dn occupations, age, approved academic load or
+performance, and financial considerations.
 
+The ARM Rules provided factors that were used for Decision Tree and
+Binomial Regression models to achieve respectable accuracy.
 
-
+| Factors That influence Dropout |Combinations that predict Dropout |                       Best Models to Predict Dropout |            
+| ------------------------------ | -------------------------------- |              	    ------------------------------ |
+| Age.at.Enrollment |		  Age.at.enrollment=[38.2,48.8) |                           ARM Rules |                               
+| Father.s.qualification |	  Curricular.units.2nd.sem..grade.=[0,3.71) |               Decision Tree (72% accuracy) |            
+| Curricular.units.2nd.sem |	  Father.s.qualification=[26.8,35.4) |                      Binomial Regression (best, 85% accuracy) |
+| Tuition.Fees.up.to.date |	  Curricular.units.2nd.sem..grade.=[0,3.71) |           
+| Mother.s.qualification |	  Previous.qualification=Higher education – degree |    
+| Mother.s.occupation |		  Curricular.units.2nd.sem..approved.=[0,4) |           
+				  Tuition.fees.up.to.date=[0,0.2) |                     
 
 \pagebreak
 # Conclusions & Key Take-Aways
 
+Some factors such as parent's qualifications and occupations are not
+something that can be controled by a school. Academic performance is a
+non-surprising predictor.
 
+Parents can provide inspiration in their own academic and professional
+qualifications.
 
-\pagebreak
-# Limitations of the Analysis and/or Available Data
+Age at enrollment in the range of 38-48 corresponds to higher life
+demands. It can be difficult for older students to balance academics
+with their other obligations. There could also be a financial factor
+here, as older students are generally responsible for their own
+tuition and fees.
 
-
-
+Tuition not up to date is a major factor for predicting
+drop-out. Financial condition is the one area where schools and
+society as a whole can perhaps apply some leverage.
 
 \pagebreak
 # Bibliography
