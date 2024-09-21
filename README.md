@@ -28,11 +28,5 @@ The measures can be categorized as demographics about students, student socio-ec
 
 The data spans multiple semesters.  The data comes from educational institutions in Portugal.
 
-# Insights:
-
-# Additional Analysis:
-
-# Lessons Learned: 
-
 # Technologies Used for Analysis:
-R and R Studio.  R Packages Used:
+R and R Studio.  R Packages Used: rpart, caret, arules, Hmisc, cluster, factoextra, randomForest, e1071, stats, nnet.
